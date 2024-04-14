@@ -1,0 +1,26 @@
+{
+  "name": "dnd-party-bot",
+  "version": "0.0.1",
+  "description": "Your friendly neighborhood bot that allows you to create and manage your dnd groups in your server!",
+  "type":"module",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Claudiocli/DnD-Party-Bot.git"
+  },
+  "keywords": [
+    "DnD"
+  ],
+  "author": "Claudio Lucisano",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Claudiocli/DnD-Party-Bot/issues"
+  },
+  "homepage": "https://github.com/Claudiocli/DnD-Party-Bot#readme",
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
