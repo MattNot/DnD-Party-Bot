@@ -7,6 +7,17 @@ import createCampaign from './commands/utility/createCampaign.js';
 
 config();
 
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWD}@clusterdnd.qxfls1g.mongodb.net/?retryWrites=true&w=majority&appName=ClusterDnD`;
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const mongo_client = new MongoClient(uri, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
+});
 
 const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds]});
 
@@ -85,3 +96,5 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
+module.exports = {mongo_client};
