@@ -1,11 +1,8 @@
-import { SlashCommandBuilder } from "discord.js";
-import { mongo_client } from 'app.js';
+import { SlashCommandBuilder, ChannelType, PermissionFlagsBits } from "discord.js";
+import { mongo_client, client } from 'app.js';
 
 // Template of objects:
-// interface User {
-//     user_name: string,
-//     user_id: string
-// };
+// interface User look up https://discord.js.org/docs/packages/discord.js/14.14.1/User:Class
 // interface Campaign {
 //     _id:ObjectId,
 //     name: string,
@@ -15,15 +12,104 @@ import { mongo_client } from 'app.js';
 //     }
 // }
 
+// Util to localize responses
+const locales = {
+    it: {
+        'already_exists': 'Il nome selezionato esiste già',
+        'created_success': 'La campagna è stata creata correttamente'
+    },
+}
+// Util function
+function getRandomColor() {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+
+    const hex_color = (r << 16) + (g << 8) + b;
+
+    return hex_color;
+}
+
 const object = {
     'data': new SlashCommandBuilder()
-        .setName('test_interactions')
-        .setDescription('Test for slash commands'),
+        .setName('create_campaign')
+        .setDescription('Create your DND campaign!')
+        .addStringOption(option =>
+            option.setName('Name')
+            .setNameLocalizations({
+                it:'Nome',
+            })
+            .setDescription('Name of your campaign')
+            .setDescriptionLocalizations({
+                it:'Nome della tua campagna'
+            })
+            .setRequired(true)
+        ),
     'execute': async function(interaction) {
         try {
             // Connect the client to the server	(optional starting in v4.7)
             await mongo_client.connect();
-            
+            let campaings = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+            const c_n = interaction.options.get('Name').value;
+            const guild = await client.guilds.fetch(interaction.guildID)
+
+            campaings.findOne({name:c_n}, async (err, result)=>{
+                if (err) throw err;
+
+                if (result) {
+                    interaction.reply({
+                        content:locales[interaction.locale]['already_exists'] ?? 'The name selected already exists',
+                        ephemeral: true,
+                    });
+                } else {
+                    // Inserting the campaign in the db (initialized with only the dm, the one who create the campaign and no players. They need to be added later)
+                    campaings.insertOne({
+                        name:c_n,
+                        elements: {
+                            dm: interaction.user,
+                            players: []
+                        },
+                    });
+                    // Creation of custom roles for the campaign
+                    const role_dm = await guild.roles.create({
+                        name: `${c_n}_DM`,
+                        color: getRandomColor(),
+                        permissions: PermissionFlagsBits.ViewChannel | PermissionFlagsBits.MuteMembers,
+                    });
+                    const role_pl = await guild.roles.create({
+                        name: `${c_n}_Player`,
+                        color: getRandomColor(),
+                        permissions: PermissionFlagsBits.ViewChannel,
+                    });
+                    // Creation of the custom category and attached channels
+                    const category = await guild.channels.create({
+                        name: c_n,
+                        type: ChannelType.GuildCategory,
+                    });
+                    category.permissionOverwrites.create(role_dm, {
+                        ViewChannel: true,
+                        MuteMembers: true,
+                    });
+                    category.permissionOverwrites.create(role_pl, {
+                        ViewChannel: true,
+                    });
+                    await guild.channels.create({
+                        name: `${c_n}_vocal`,
+                        type: ChannelType.GuildVoice,
+                        parent: category,
+                    });
+                    await guild.channels.create({
+                        name: `${c_n}_text`,
+                        type: ChannelType.GuildText,
+                        parent: category,
+                    });
+
+                    interaction.reply({
+                        content:locales[interaction.locale]['created_success'] ?? 'Campaign created successfully',
+                        ephemeral: true,
+                    });
+                }
+            });
         } catch (error) {
             console.error(`[Mongo Connection] An error has occurred.\n${error}`);
         } finally {

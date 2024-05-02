@@ -97,4 +97,4 @@ client.on(Events.InteractionCreate, async interaction => {
 
 client.login(process.env.DISCORD_TOKEN);
 
-module.exports = {mongo_client};
+module.exports = {mongo_client, client};
