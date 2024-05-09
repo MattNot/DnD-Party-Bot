@@ -1,8 +1,6 @@
 import { config } from 'dotenv';
 import { REST, Routes, Client, Collection, Events, GatewayIntentBits } from 'discord.js';
-import { readdirSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { commands } from './commands/commands.js';
 import createCampaign from './commands/utility/createCampaign.js';
 
 config();
@@ -24,32 +22,17 @@ const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayInte
 client.once(Events.ClientReady, readyClient => {
     console.log(`Logged in as ${readyClient.user.tag}`);
 });
-// FIXME: Need fixes for ES6 incompatibilities
-// // Setting up the possible commands of the client
-// client.commands = new Collection();
-// // Getting all the commands in the path `commands/*`
-// const foldersPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'commands');
-// const commandFolders = readdirSync(foldersPath);
-// // Actually loading each COMMAND.js inside the commands folder, making sure that each of them contains at least the `data` and `execute` property
-// for (const folder of commandFolders)  {
-//     const commandsPath = path.join(foldersPath, folder);
-//     const commandFiles = readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-//     for (const file of commandFiles)    {
-//         const filePath = path.join(commandsPath, file);
-//         const command = await import (filePath);
-//         if ('data' in command && 'execute' in command)  {
-//             client.command.set(command.data.name, command);
-//         }   else    {
-//             console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`)
-//         }
-//     }
-// }
-
+// Setting up the possible commands of the client
 client.commands = new Collection();
 
+for (const name in commands)   {
+    client.commands.set(name, commands[name]);
+}
+
 client.commands.set(createCampaign.data.name, createCampaign);
+// FIXME: deploy all commands!
 // Accrocchio per testare
-const rest = new REST().setToken(process.env.DISCORD_TOKEN)
+const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
 async function deploy() {
     try {
