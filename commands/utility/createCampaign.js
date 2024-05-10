@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ChannelType, PermissionFlagsBits } from "discord.js";
-import { mongo_client, client } from 'app.js';
+import { mongo_client, client } from './../../app.js';
 
 // Template of objects:
 // interface User look up https://discord.js.org/docs/packages/discord.js/14.14.1/User:Class
@@ -30,14 +30,14 @@ function getRandomColor() {
     return hex_color;
 }
 
-const object = {
+export default {
     'data': new SlashCommandBuilder()
         .setName('create_campaign')
         .setDescription('Create your DND campaign!')
         .addStringOption(option =>
-            option.setName('Name')
+            option.setName('name')
             .setNameLocalizations({
-                it:'Nome',
+                it:'nome',
             })
             .setDescription('Name of your campaign')
             .setDescriptionLocalizations({
@@ -50,7 +50,7 @@ const object = {
             // Connect the client to the server	(optional starting in v4.7)
             await mongo_client.connect();
             let campaings = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
-            const c_n = interaction.options.get('Name').value;
+            const c_n = interaction.options.get('name').value;
             const guild = await client.guilds.fetch(interaction.guildID)
 
             campaings.findOne({name:c_n}, async (err, result)=>{
@@ -118,4 +118,3 @@ const object = {
         }
     }
 };
-export default object;

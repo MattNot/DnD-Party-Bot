@@ -1,11 +1,10 @@
 import { config } from 'dotenv';
 import { REST, Routes, Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { commands } from './commands/commands.js';
-import createCampaign from './commands/utility/createCampaign.js';
+import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 
 config();
 
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWD}@clusterdnd.qxfls1g.mongodb.net/?retryWrites=true&w=majority&appName=ClusterDnD`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -26,34 +25,32 @@ client.once(Events.ClientReady, readyClient => {
 client.commands = new Collection();
 
 for (const name in commands)   {
-    client.commands.set(name, commands[name]);
+    await client.commands.set(name, commands[name].default);
 }
-
-client.commands.set(createCampaign.data.name, createCampaign);
-// FIXME: deploy all commands!
-// Accrocchio per testare
 const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-
-async function deploy() {
+// Deploy of commands
+(async () => {
     try {
         console.log('Deploying (/) commands');
 
-        const data = await rest.post(
-            Routes.applicationGuildCommands(process.env.APP_ID, process.env.SERVER_ID),
-            {
-                headers: {'content-type':'application/json'},
-                body: createCampaign.data
-            },
-        );
+        client.commands.toJSON().forEach(async element => {
+            const data = await rest.post(
+                Routes.applicationCommands(process.env.APP_ID),
+                {
+                    headers: {
+                        'content-type':'application/json',
+                        'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
+                    },
+                    body: element,
+                },
+            );
+        });
 
         console.log('Depoloyed (/) commands');
     } catch (error) {
         console.error(error);
     }
-};
-
-deploy();
-// Fine accrocchio
+})();
 
 // Listener that execute interactions
 client.on(Events.InteractionCreate, async interaction => {
@@ -80,4 +77,4 @@ client.on(Events.InteractionCreate, async interaction => {
 
 client.login(process.env.DISCORD_TOKEN);
 
-module.exports = {mongo_client, client};
+export {mongo_client, client};
