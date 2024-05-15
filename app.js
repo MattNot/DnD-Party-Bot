@@ -33,7 +33,7 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     try {
         console.log('Deploying (/) commands');
 
-        client.commands.toJSON().forEach(async element => {
+        client.commands.forEach(async element => {
             const data = await rest.post(
                 Routes.applicationCommands(process.env.APP_ID),
                 {
@@ -41,7 +41,7 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
                         'content-type':'application/json',
                         'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
                     },
-                    body: await element,
+                    body: await element.data.toJSON(),
                 },
             );
         });

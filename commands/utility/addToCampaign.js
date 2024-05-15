@@ -22,7 +22,7 @@ export default {
             it:'Aggiungi un utente alla tua campagna',
         })
         .addStringOption(option => {
-            option.setName('name')
+            return option.setName('name')
             .setNameLocalizations({
                 it:'nome',
             })
@@ -33,7 +33,7 @@ export default {
             .setRequired(true);
         })
         .addUserOption(option => {
-            option.setName('user')
+            return option.setName('user')
             .setNameLocalizations({
                 it:'utente',
             })
@@ -43,20 +43,20 @@ export default {
             })
             .setRequired(true);
         }),
-    'execute': async function(interaction) {
-        await mongo_client.connect();
-        let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
-        let c_n = interaction.options.get('name');
-        
-        campaigns.findOne({name:c_n}, async (err, result) => {
-            if (err) throw err;
+        async function(interaction) {
+            await mongo_client.connect();
+            let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+            let c_n = interaction.options.get('name');
             
-            if (result) {
-                let n = result;
-                n['elements']['players'].push(interaction.options.get('user'));
-                // TODO: Setup the roles properly
-                campaigns.updateOne({name:cn}, n);
-            }
-        });
-    }
+            campaigns.findOne({name:c_n}, async (err, result) => {
+                if (err) throw err;
+                
+                if (result) {
+                    let n = result;
+                    n['elements']['players'].push(interaction.options.get('user'));
+                    // TODO: Setup the roles properly
+                    campaigns.updateOne({name:cn}, n);
+                }
+            });
+        }
 };

@@ -45,76 +45,76 @@ export default {
             })
             .setRequired(true)
         ),
-    'execute': async function(interaction) {
-        try {
-            // Connect the client to the server	(optional starting in v4.7)
-            await mongo_client.connect();
-            let campaings = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
-            const c_n = interaction.options.get('name').value;
-            const guild = await client.guilds.fetch(interaction.guildID)
+        async function(interaction) {
+            try {
+                // Connect the client to the server	(optional starting in v4.7)
+                await mongo_client.connect();
+                let campaings = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+                const c_n = interaction.options.get('name').value;
+                const guild = await client.guilds.fetch(interaction.guildID)
 
-            campaings.findOne({name:c_n}, async (err, result)=>{
-                if (err) throw err;
+                campaings.findOne({name:c_n}, async (err, result)=>{
+                    if (err) throw err;
 
-                if (result) {
-                    interaction.reply({
-                        content:locales[interaction.locale]['already_exists'] ?? 'The name selected already exists',
-                        ephemeral: true,
-                    });
-                } else {
-                    // Inserting the campaign in the db (initialized with only the dm, the one who create the campaign and no players. They need to be added later)
-                    campaings.insertOne({
-                        name:c_n,
-                        elements: {
-                            dm: interaction.user,
-                            players: []
-                        },
-                    });
-                    // Creation of custom roles for the campaign
-                    const role_dm = await guild.roles.create({
-                        name: `${c_n}_DM`,
-                        color: getRandomColor(),
-                        permissions: PermissionFlagsBits.ViewChannel | PermissionFlagsBits.MuteMembers,
-                    });
-                    const role_pl = await guild.roles.create({
-                        name: `${c_n}_Player`,
-                        color: getRandomColor(),
-                        permissions: PermissionFlagsBits.ViewChannel,
-                    });
-                    // Creation of the custom category and attached channels
-                    const category = await guild.channels.create({
-                        name: c_n,
-                        type: ChannelType.GuildCategory,
-                    });
-                    category.permissionOverwrites.create(role_dm, {
-                        ViewChannel: true,
-                        MuteMembers: true,
-                    });
-                    category.permissionOverwrites.create(role_pl, {
-                        ViewChannel: true,
-                    });
-                    await guild.channels.create({
-                        name: `${c_n}_vocal`,
-                        type: ChannelType.GuildVoice,
-                        parent: category,
-                    });
-                    await guild.channels.create({
-                        name: `${c_n}_text`,
-                        type: ChannelType.GuildText,
-                        parent: category,
-                    });
+                    if (result) {
+                        interaction.reply({
+                            content:locales[interaction.locale]['already_exists'] ?? 'The name selected already exists',
+                            ephemeral: true,
+                        });
+                    } else {
+                        // Inserting the campaign in the db (initialized with only the dm, the one who create the campaign and no players. They need to be added later)
+                        campaings.insertOne({
+                            name:c_n,
+                            elements: {
+                                dm: interaction.user,
+                                players: []
+                            },
+                        });
+                        // Creation of custom roles for the campaign
+                        const role_dm = await guild.roles.create({
+                            name: `${c_n}_DM`,
+                            color: getRandomColor(),
+                            permissions: PermissionFlagsBits.ViewChannel | PermissionFlagsBits.MuteMembers,
+                        });
+                        const role_pl = await guild.roles.create({
+                            name: `${c_n}_Player`,
+                            color: getRandomColor(),
+                            permissions: PermissionFlagsBits.ViewChannel,
+                        });
+                        // Creation of the custom category and attached channels
+                        const category = await guild.channels.create({
+                            name: c_n,
+                            type: ChannelType.GuildCategory,
+                        });
+                        category.permissionOverwrites.create(role_dm, {
+                            ViewChannel: true,
+                            MuteMembers: true,
+                        });
+                        category.permissionOverwrites.create(role_pl, {
+                            ViewChannel: true,
+                        });
+                        await guild.channels.create({
+                            name: `${c_n}_vocal`,
+                            type: ChannelType.GuildVoice,
+                            parent: category,
+                        });
+                        await guild.channels.create({
+                            name: `${c_n}_text`,
+                            type: ChannelType.GuildText,
+                            parent: category,
+                        });
 
-                    interaction.reply({
-                        content:locales[interaction.locale]['created_success'] ?? 'Campaign created successfully',
-                        ephemeral: true,
-                    });
-                }
-            });
-        } catch (error) {
-            console.error(`[Mongo Connection] An error has occurred.\n${error}`);
-        } finally {
-            // Ensures that the client will close when you finish/error
-            await mongo_client.close();
+                        interaction.reply({
+                            content:locales[interaction.locale]['created_success'] ?? 'Campaign created successfully',
+                            ephemeral: true,
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error(`[Mongo Connection] An error has occurred.\n${error}`);
+            } finally {
+                // Ensures that the client will close when you finish/error
+                await mongo_client.close();
+            }
         }
-    }
 };
