@@ -15,11 +15,12 @@ const mongo_client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+console.log('[Mongo Connection] - Connection started');
 
 const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds]});
 
 client.once(Events.ClientReady, readyClient => {
-    console.log(`Logged in as ${readyClient.user.tag}`);
+    console.log(`[INFO] - Logged in as ${readyClient.user.tag}`);
 });
 // Setting up the possible commands of the client
 client.commands = new Collection();
@@ -31,7 +32,7 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 // Deploy of commands
 (async () => {
     try {
-        console.log('Deploying (/) commands');
+        console.log('[INFO] - Deploying (/) commands');
 
         client.commands.forEach(async element => {
             const data = await rest.post(
@@ -46,7 +47,7 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
             );
         });
 
-        console.log('Depoloyed (/) commands');
+        console.log('[INFO] - Depoloyed (/) commands');
     } catch (error) {
         console.error(error);
     }
@@ -56,10 +57,10 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    const command = interaction.client.commands.get(interaction.commandName);
+    const command = await interaction.client.commands.get(interaction.commandName);
 
     if (!command)   {
-        console.error(`No command matching ${interaction.commandName} found`);
+        console.error(`[ERROR] - No command matching ${interaction.commandName} found`);
         return;
     }
 

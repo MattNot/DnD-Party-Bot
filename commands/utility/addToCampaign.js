@@ -11,6 +11,11 @@ import { mongo_client } from "../../app.js";
 //         players: Array<User>
 //     }
 // }
+const locales = {
+    it: {
+        'user_added': 'L\'utente è stato inserito nella campagna',
+    }
+};
 export default {
     'data': new SlashCommandBuilder()
         .setName('add')
@@ -43,20 +48,30 @@ export default {
             })
             .setRequired(true);
         }),
-        async function(interaction) {
+        async execute(interaction) {
+            interaction.deferReply();
             await mongo_client.connect();
             let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
             let c_n = interaction.options.get('name');
-            
-            campaigns.findOne({name:c_n}, async (err, result) => {
+            console.log('[INFO] - Trying to add a user to a campaign');
+            let re = await campaigns.findOne({name:c_n}, async (err, result) => {
+                console.log('Finding a campaign');
                 if (err) throw err;
                 
                 if (result) {
                     let n = result;
                     n['elements']['players'].push(interaction.options.get('user'));
                     // TODO: Setup the roles properly
-                    campaigns.updateOne({name:cn}, n);
+                    await campaigns.updateOne({name:cn}, n);
+                    interaction.editReply({
+                        content: locales[interaction.locale]['user_added'] ?? 'User was added to the campaign',
+                        ephemeral: false,
+                    });
                 }
+                console.log('End of async');
             });
+            console.log(re);
+            console.log(campaigns);
+            console.log('[INFO] - A user was added to a campaign');
         }
 };
