@@ -56,7 +56,7 @@ export default {
             try {
                 // Connect the client to the server	(optional starting in v4.7)
                 await mongo_client.connect();
-                let campaings = await mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+                let campaings = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
                 const c_n = interaction.options.get('name').value;
                 const guild = await client.guilds.fetch(interaction.guildID)
                 console.log('[INFO] - Trying to fetch a campaign');
