@@ -14,6 +14,7 @@ import { mongo_client } from "../../app.js";
 const locales = {
     it: {
         'user_added': 'L\'utente è stato inserito nella campagna',
+        'user_alreafy': `L'utente ${interaction.options.get('user')} è già stato inserito!`,
     }
 };
 export default {
@@ -54,24 +55,25 @@ export default {
             let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
             let c_n = interaction.options.get('name');
             console.log('[INFO] - Trying to add a user to a campaign');
-            let re = await campaigns.findOne({name:c_n}, async (err, result) => {
-                console.log('Finding a campaign');
-                if (err) throw err;
-                
+            let re = await campaigns.findOne({name:c_n}, async (result) => {
+                console.log('[INFO] - Finding a campaign');                
                 if (result) {
                     let n = result;
                     n['elements']['players'].push(interaction.options.get('user'));
-                    // TODO: Setup the roles properly
+                    interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_Player`));
+                    console.log(`[INFO : ${guild.name}] - Player Role assigned`);
                     await campaigns.updateOne({name:cn}, n);
                     interaction.editReply({
                         content: locales[interaction.locale]['user_added'] ?? 'User was added to the campaign',
                         ephemeral: false,
                     });
+                } else {
+                    interaction.editReply({
+                        content: locales[interaction.locale]['user_already'] ?? `User ${interaction.option.get('user')} was already added!`,
+                        ephemeral: false,
+                    });
                 }
-                console.log('End of async');
             });
-            console.log(re);
-            console.log(campaigns);
             console.log('[INFO] - A user was added to a campaign');
         }
 };
