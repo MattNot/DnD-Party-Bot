@@ -56,18 +56,12 @@ export default {
             try {
                 // Connect the client to the server	(optional starting in v4.7)
                 await mongo_client.connect();
-                let campaings = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+                let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
                 const c_n = interaction.options.get('name').value;
-                const guild = await client.guilds.fetch(interaction.guildID)
+                const guild = await interaction?.guild;
                 console.log('[INFO] - Trying to fetch a campaign');
-                await campaings.findOne({name:c_n}, async (err, result)=>{
-                    console.log(err);
-                    console.log(result);
-                    if (err) {
-                        console.error(`[Mongo Connection] - ${err}`);
-                        throw err;
-                    }
-
+                console.log(`[INFO] - GUILD : ${interaction?.guild}`);
+                await campaigns.findOne({name:c_n}).then(async function (result) {  
                     if (result) {
                         interaction.editReply({
                             content:locales[interaction.locale]['already_exists'] ?? 'The name selected already exists',
@@ -77,7 +71,7 @@ export default {
                     } else {
                         // Inserting the campaign in the db (initialized with only the dm, the one who create the campaign and no players. They need to be added later)
                         console.log('[INFO] - Trying to create a new Campaign');
-                        await campaings.insertOne({
+                        await campaigns.insertOne({
                             name:c_n,
                             elements: {
                                 dm: interaction.user,
@@ -110,6 +104,8 @@ export default {
                             ViewChannel: true,
                         });
                         console.log(`[INFO : ${guild.name}] - Roles created and deployed`);
+                        interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_DM`));
+                        console.log(`[INFO : ${guild.name}] - DM Role assigned`);
                         await guild.channels.create({
                             name: `${c_n}_vocal`,
                             type: ChannelType.GuildVoice,
@@ -130,7 +126,8 @@ export default {
                     }
                 });
             } catch (error) {
-                console.error(`[Mongo Connection] An error has occurred.\n${error}`);
+                console.error(`[CreateCampaign] An error has occurred:\n${error}`);
+                interaction.editReply('[Mongo Connection] Connection closed due to an error');
             } finally {
                 // Ensures that the client will close when you finish/error
                 await mongo_client.close();
