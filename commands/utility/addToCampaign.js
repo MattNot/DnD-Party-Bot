@@ -14,7 +14,7 @@ import { mongo_client } from "../../app.js";
 const locales = {
     it: {
         'user_added': 'L\'utente è stato inserito nella campagna',
-        'user_alreafy': `L'utente ${interaction.options.get('user')} è già stato inserito!`,
+        'user_already': 'L\'utente è già stato inserito!',
     }
 };
 export default {
@@ -55,7 +55,7 @@ export default {
             let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
             let c_n = interaction.options.get('name');
             console.log('[INFO] - Trying to add a user to a campaign');
-            let re = await campaigns.findOne({name:c_n}, async (result) => {
+            await campaigns.findOne({name:c_n}).then(async function (result) {
                 console.log('[INFO] - Finding a campaign');
                 const guild = interaction?.guild;
                 if (result) {
@@ -75,6 +75,5 @@ export default {
                     });
                 }
             });
-            console.log('[INFO] - A user was added to a campaign');
         }
 };
