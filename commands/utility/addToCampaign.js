@@ -56,7 +56,8 @@ export default {
             let c_n = interaction.options.get('name');
             console.log('[INFO] - Trying to add a user to a campaign');
             let re = await campaigns.findOne({name:c_n}, async (result) => {
-                console.log('[INFO] - Finding a campaign');                
+                console.log('[INFO] - Finding a campaign');
+                const guild = interaction?.guild;
                 if (result) {
                     let n = result;
                     n['elements']['players'].push(interaction.options.get('user'));
