@@ -14,7 +14,7 @@ import { mongo_client } from "../../app.js";
 const locales = {
     it: {
         'user_added': 'L\'utente è stato inserito nella campagna',
-        'user_alreafy': `L'utente ${interaction.options.get('user')} è già stato inserito!`,
+        'user_already': 'L\'utente è già stato inserito!',
     }
 };
 export default {
