@@ -16,7 +16,9 @@ import { mongo_client, client } from './../../app.js';
 const locales = {
     it: {
         'already_exists': 'Il nome selezionato esiste già',
-        'created_success': 'La campagna è stata creata correttamente'
+        'created_success': 'La campagna è stata creata correttamente',
+        'Newbie':'Sei di livello troppo basso per creare una campagna!',
+        'Paladin_already':'Hai già una campagna! Sali di livello per poterne creare delle altre!',
     },
 };
 // Util function
@@ -53,6 +55,36 @@ export default {
         ),
         async execute(interaction) {
             interaction.deferReply();
+            // Can create no campaign
+            if (interaction.member.roles === 'Newbie')  {
+                interaction.editReply({content:locales[interaction.locale]['Newbie'] ?? 'You are too low level to create a campaign!', ephemeral: false});
+                return;
+            }
+            // Can create only one
+            if (interaction.member.roles === 'Paladino del Sole')   {
+                try {
+                    await mongo_client.connect();
+                    let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+                    const guild = await interaction?.guild;
+                    
+                    console.log('[INFO] - Checking permission to create a campaign');
+                    // TODO: Check if it works otherwise, elements.dm
+                    const res = await campaigns.findOne({dm: interaction.user}).then(async function (result) {
+                        if (!result)    {
+                            interaction.editReply({content:locales[interaction.locale]['Paladin_already'] ?? 'You are too low level to create a campaign!', ephemeral: false});
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    });
+                    if (!res)    {
+                        return;
+                    }
+                } catch (error) {
+                    console.error(error);
+                    interaction.editReply({content: 'An error has occurred', ephemeral: false});
+                }
+            }
             try {
                 // Connect the client to the server	(optional starting in v4.7)
                 await mongo_client.connect();
