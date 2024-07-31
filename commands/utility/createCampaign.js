@@ -56,12 +56,12 @@ export default {
         async execute(interaction) {
             interaction.deferReply();
             // Can create no campaign
-            if (interaction.member.roles === 'Newbie')  {
+            if (interaction.member.roles.cache.some(r => r.name === 'Newbie'))  {
                 interaction.editReply({content:locales[interaction.locale]['Newbie'] ?? 'You are too low level to create a campaign!', ephemeral: false});
                 return;
             }
             // Can create only one
-            if (interaction.member.roles === 'Paladino del Sole')   {
+            if (interaction.member.cache.some(r => r.name === 'Paladino del Sole'))   {
                 try {
                     await mongo_client.connect();
                     let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
@@ -140,11 +140,21 @@ export default {
                         console.log(`[INFO : ${guild.name}] - DM Role assigned`);
                         await guild.channels.create({
                             name: `${c_n}_vocal`,
-                            type: ChannelType.GuildVoice,
+                            type: ChannelType.GuildStageVoice,
                             parent: category,
                         });
                         await guild.channels.create({
                             name: `${c_n}_text`,
+                            type: ChannelType.GuildText,
+                            parent: category,
+                        });
+                        await guild.channels.create({
+                            name: `${c_n}_meme`,
+                            type: ChannelType.GuildText,
+                            parent: category,
+                        });
+                        await guild.channels.create({
+                            name: `${c_n}_organize`,
                             type: ChannelType.GuildText,
                             parent: category,
                         });

@@ -59,9 +59,10 @@ export default {
                 console.log('[INFO] - Finding a campaign');
                 const guild = await interaction?.guild;
                 if (result) {
+                    // TODO: Check on user's roles return error if already with role
                     interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_Player`));
                     console.log(`[INFO : ${guild.name}] - Player Role assigned`);
-                    await campaigns.updateOne({name:c_n}, {$push: {'elements':{'players':interaction.options.get('user').value}}});
+                    await campaigns.updateOne({name:c_n}, {$push: {'players':interaction.options.get('user').value}});
                     interaction.editReply({
                         content: locales[interaction.locale]['user_added'] ?? 'User was added to the campaign',
                         ephemeral: false,
