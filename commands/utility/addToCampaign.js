@@ -49,31 +49,31 @@ export default {
             })
             .setRequired(true);
         }),
-        async execute(interaction) {
-            interaction.deferReply();
-            await mongo_client.connect();
-            let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
-            let c_n = interaction.options.get('name').value;
-            console.log('[INFO] - Trying to add a user to a campaign');
-            await campaigns.findOne({name:c_n}).then(async function (result) {
-                console.log('[INFO] - Finding a campaign');
-                const guild = await interaction?.guild;
-                if (result) {
-                    // TODO: Check on user's roles return error if already with role
-                    interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_Player`));
-                    console.log(`[INFO : ${guild.name}] - Player Role assigned`);
-                    await campaigns.updateOne({name:c_n}, {$push: {'players':interaction.options.get('user').value}});
-                    interaction.editReply({
-                        content: locales[interaction.locale]['user_added'] ?? 'User was added to the campaign',
-                        ephemeral: false,
-                    });
-                } else {
-                    // FIXME: There is no campaign with this name, not that a user is already there!
-                    interaction.editReply({
-                        content: locales[interaction.locale]['user_already'] ?? `User ${interaction.option.get('user')} was already added!`,
-                        ephemeral: false,
-                    });
-                }
-            });
-        }
+    async execute(interaction) {
+        interaction.deferReply();
+        await mongo_client.connect();
+        let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+        let c_n = interaction.options.get('name').value;
+        console.log('[INFO] - Trying to add a user to a campaign');
+        await campaigns.findOne({name:c_n}).then(async function (result) {
+            console.log('[INFO] - Finding a campaign');
+            const guild = await interaction?.guild;
+            if (result) {
+                // TODO: Check on user's roles return error if already with role
+                interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_Player`));
+                console.log(`[INFO : ${guild.name}] - Player Role assigned`);
+                await campaigns.updateOne({name:c_n}, {$push: {'players':interaction.options.get('user').value}});
+                interaction.editReply({
+                    content: locales[interaction.locale]['user_added'] ?? 'User was added to the campaign',
+                    ephemeral: false,
+                });
+            } else {
+                // FIXME: There is no campaign with this name, not that a user is already there!
+                interaction.editReply({
+                    content: locales[interaction.locale]['user_already'] ?? `User ${interaction.option.get('user')} was already added!`,
+                    ephemeral: false,
+                });
+            }
+        });
+    }
 };
