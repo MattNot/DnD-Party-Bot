@@ -1,5 +1,7 @@
 import { SlashCommandBuilder, Events } from "discord.js";
-import { client } from "../../app";
+import { client } from './../../app.js';
+
+let announcements_channel = null;
 
 export default {
     'data': new SlashCommandBuilder()
@@ -12,7 +14,8 @@ export default {
             it:'Seleziona questo canale come canale per gli annunci',
         }),
     async execute(interaction)  {
-        client.on(Events.GuildScheduledEventCreate, async createdScheduledEvent => {
+        interaction.client.on(Events.GuildScheduledEventUserAdd, async createdScheduledEvent => {
+            console.log(`ScheduledEvent created - ${createdScheduledEvent}`)
             // TODO: implement such that it's scalable with multiple languages
             // switch (interaction?.guild.locale) {
             //     case value:
@@ -24,5 +27,6 @@ export default {
             // }
             interaction.channel.send(`Hey @everyone, è stata programmata una sessione! :eyes:\nTenetevi pronti per ${createdScheduledEvent.scheduledStartsAt}!`);
         });
+        interaction.reply('Channel succesfully selected');
     }
 };
