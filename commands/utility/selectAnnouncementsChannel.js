@@ -48,10 +48,14 @@ export default {
             });
         });
         // FIXME: Can't understand why it's converting circular structure to BSON
-        // await mongo_client.connect();
-        // let ann = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_A_COLLECTION_NAME);
-        // await ann.updateOne({guild: interaction.guild}, { $set: {channel: interaction.channel} }, {upsert: true});
-        // mongo_client.close();
+        await mongo_client.connect();
+        try {
+            let ann = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_A_COLLECTION_NAME);
+            await ann.updateOne({guild: interaction.guild}, { $set: {channel: interaction.channel} }, {upsert: true});
+        } catch (error) {
+            console.error(`[MONGODB ERROR] Error on inserting announcement channel in db\n${error}`)
+        }
+        mongo_client.close();
         // Resolve of the interaction
         interaction.reply('Channel succesfully selected');
     }

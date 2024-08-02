@@ -17,7 +17,7 @@ const mongo_client = new MongoClient(uri, {
 });
 console.log('[Mongo Connection] - Connection started');
 
-const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds, GatewayIntentBits.GuildScheduledEvents], disableEveryone: false});
+const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds], disableEveryone: false});
 
 client.once(Events.ClientReady, readyClient => {
     console.log(`[INFO] - Logged in as ${readyClient.user.tag}`);
