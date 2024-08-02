@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ChannelType, PermissionFlagsBits } from "discord.js";
-import { mongo_client, client } from './../../app.js';
+import { mongo_client } from './../../app.js';
 
 // Template of objects:
 // interface User look up https://discord.js.org/docs/packages/discord.js/14.14.1/User:Class
@@ -65,8 +65,7 @@ export default {
             try {
                 await mongo_client.connect();
                 let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
-                const guild = await interaction?.guild;
-                
+                    
                 console.log('[INFO] - Checking permission to create a campaign');
                 // TODO: Check if it works otherwise, elements.dm
                 const res = await campaigns.findOne({dm: interaction.user}).then(async function (result) {
