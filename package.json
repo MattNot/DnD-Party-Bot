@@ -5,7 +5,7 @@
   "type": "module",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test --test-force-exit --test-name-pattern='.*\\.test\\.js'",
     "startup": "node app.js > log.txt 2>error.txt"
   },
   "repository": {

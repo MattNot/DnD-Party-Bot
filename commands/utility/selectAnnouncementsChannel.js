@@ -51,7 +51,7 @@ export default {
         await mongo_client.connect();
         try {
             let ann = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_A_COLLECTION_NAME);
-            await ann.updateOne({guild: interaction.guild}, { $set: {channel: interaction.channel} }, {upsert: true});
+            await ann.updateOne({guild: interaction.guild}, { $set: {'channel': interaction.channel} }, {upsert: true});
         } catch (error) {
             console.error(`[MONGODB ERROR] Error on inserting announcement channel in db\n${error}`)
         }

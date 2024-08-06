@@ -1,6 +1,5 @@
 import { config } from 'dotenv';
 import { REST, Routes, Client, Collection, Events, GatewayIntentBits } from 'discord.js';
-import { commands } from './commands/commands.js';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
 config();
@@ -21,6 +20,7 @@ const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayInte
 
 client.once(Events.ClientReady, readyClient => {
     console.log(`[INFO] - Logged in as ${readyClient.user.tag}`);
+    loadCommands();
 });
 client.once(Events.ClientReady, async c => {
     await mongo_client.connect();
@@ -53,11 +53,14 @@ client.once(Events.ClientReady, async c => {
     }
     mongo_client.close();
 })
-// Setting up the possible commands of the client
+async function loadCommands() {
+    // Setting up the possible commands of the client
 client.commands = new Collection();
 
-for (const name in commands)   {
-    await client.commands.set(name, commands[name].default);
+const c = await import('./commands/commands.js');
+
+for (const name in c.default)   {
+    await client.commands.set(name, c[name].default);
 }
 const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 // Deploy of commands
@@ -66,6 +69,8 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
         console.log('[INFO] - Deploying (/) commands');
 
         client.commands.forEach(async element => {
+            console.log(element);
+            console.log(client.commands);
             await rest.post(
                 Routes.applicationCommands(process.env.APP_ID),
                 {
@@ -83,6 +88,7 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
         console.error(error);
     }
 })();
+};
 
 // Listener that execute interactions
 client.on(Events.InteractionCreate, async interaction => {
