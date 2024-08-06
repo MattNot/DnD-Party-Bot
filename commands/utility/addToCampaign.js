@@ -1,20 +1,11 @@
 import { SlashCommandBuilder } from "discord.js";
 import { mongo_client } from "../../app.js";
 
-// Template of objects:
-// interface User look up https://discord.js.org/docs/packages/discord.js/14.14.1/User:Class
-// interface Campaign {
-//     _id:ObjectId,
-//     name: string,
-//     elements: {
-//         dm: User,
-//         players: Array<User>
-//     }
-// }
 const locales = {
     it: {
         'user_added': 'L\'utente è stato inserito nella campagna',
         'user_already': 'L\'utente è già stato inserito!',
+        'campaign_not_found': 'La campagna non è stata trovata',
     }
 };
 export default {
@@ -59,7 +50,15 @@ export default {
             console.log('[INFO] - Finding a campaign');
             const guild = await interaction?.guild;
             if (result) {
-                // TODO: Check on user's roles return error if already with role
+                if (interaction?.member.roles.cache.hasAny(`${c_n}_Player`)) {
+                    // Already added
+                    interaction.editReply({
+                        content:locales[interaction.locale]['user_already'] ?? `User ${interaction.option.get('user')} was already added!`,
+                        ephemeral: false,
+                    });
+                    return;
+                }
+                // Adding role
                 interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_Player`));
                 console.log(`[INFO : ${guild.name}] - Player Role assigned`);
                 await campaigns.updateOne({name:c_n}, {$push: {'players':interaction.options.get('user').value}});
@@ -68,9 +67,8 @@ export default {
                     ephemeral: false,
                 });
             } else {
-                // FIXME: There is no campaign with this name, not that a user is already there!
                 interaction.editReply({
-                    content: locales[interaction.locale]['user_already'] ?? `User ${interaction.option.get('user')} was already added!`,
+                    content: locales[interaction.locale]['campaign_not_found'] ?? `The campaign was not found`,
                     ephemeral: false,
                 });
             }

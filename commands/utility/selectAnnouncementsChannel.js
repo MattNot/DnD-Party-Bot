@@ -28,15 +28,6 @@ export default {
         });
         // Update event listenr
         interaction.client.on(Events.GuildScheduledEventUpdate, async (editedScheduledEventUrl) => {
-            // TODO: too much complexity?
-            // console.log(`Edit on ScheduledEvent - ${editedScheduledEventUrl}`);
-            // interaction.guild.scheduledEvents.fetch(editedScheduledEventUrl).then((scheduledEvent) => {
-            //     interaction.channel.messages.fetch().then((messages) => {
-            //         messages.forEach(message => {
-            //             message.content.includes(scheduledEvent.id);
-            //         });
-            //     });
-            // });
             interaction.guild.scheduledEvents.fetch(editedScheduledEventUrl).then((oldScheduledEvent, newScheduledEvent) => {
                 interaction.channel.send(`Cambio di programmi @everyone! La sessione ${oldScheduledEvent.name} si terrà alle ore ${new Intl.DateTimeFormat('it-IT', {hour: 'numeric', minute: 'numeric'}).format(newScheduledEvent.scheduledStartAt)} di ${new Intl.DateTimeFormat('it-IT', {weekday: 'long', day: 'numeric', month: 'long'}).format(newScheduledEvent.scheduledStartAt)}`);
             });
