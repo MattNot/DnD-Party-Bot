@@ -61,34 +61,41 @@ client.commands = new Collection();
 const c = await import('./commands/commands.js');
 
 for (const name in c.default)   {
-    await client.commands.set(name, c[name].default);
+    await rest.post(
+        Routes.applicationCommands(process.env.APP_ID),
+        {
+            headers: {
+                'content-type':'application/json',
+                'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
+            },
+            body: c.commands[name].data.toJSON(),
+        },
+    );
 }
 const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 // Deploy of commands
-(async () => {
-    try {
-        console.log('[INFO] - Deploying (/) commands');
+// (async () => {
+//     try {
+//         console.log('[INFO] - Deploying (/) commands');
 
-        client.commands.forEach(async element => {
-            console.log(element);
-            console.log(client.commands);
-            await rest.post(
-                Routes.applicationCommands(process.env.APP_ID),
-                {
-                    headers: {
-                        'content-type':'application/json',
-                        'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
-                    },
-                    body: await element.data.toJSON(),
-                },
-            );
-        });
+//         client.commands.forEach(async element => {
+//             await rest.post(
+//                 Routes.applicationCommands(process.env.APP_ID),
+//                 {
+//                     headers: {
+//                         'content-type':'application/json',
+//                         'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
+//                     },
+//                     body: await element.data.toJSON(),
+//                 },
+//             );
+//         });
 
-        console.log('[INFO] - Depoloyed (/) commands');
-    } catch (error) {
-        console.error(error);
-    }
-})();
+//         console.log('[INFO] - Depoloyed (/) commands');
+//     } catch (error) {
+//         console.error(error);
+//     }
+// })();
 };
 
 // Listener that execute interactions
