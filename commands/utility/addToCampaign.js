@@ -1,16 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import { mongo_client } from "../../app.js";
 
-// Template of objects:
-// interface User look up https://discord.js.org/docs/packages/discord.js/14.14.1/User:Class
-// interface Campaign {
-//     _id:ObjectId,
-//     name: string,
-//     elements: {
-//         dm: User,
-//         players: Array<User>
-//     }
-// }
 const locales = {
     it: {
         'user_added': 'L\'utente è stato inserito nella campagna',
