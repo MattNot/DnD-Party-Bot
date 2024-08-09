@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 import { REST, Routes, Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { MongoClient, ServerApiVersion } from 'mongodb';
+import * as commands from './commands/commands.js';
 
 config();
 
@@ -17,6 +18,29 @@ const mongo_client = new MongoClient(uri, {
 console.log('[Mongo Connection] - Connection started');
 
 const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds], disableEveryone: false});
+
+async function loadCommands()    {
+    // Setting up the possible commands of the client
+    client.commands = new Collection();
+    const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+
+    for (const name in commands.default)   {
+        const command = commands.default[name];
+        client.commands.set(command.data.name, command);
+        console.log('[INFO] - Deploying (/) commands');
+        await rest.post(
+            Routes.applicationCommands(process.env.APP_ID),
+            {
+                headers: {
+                    'content-type':'application/json',
+                    'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
+                },
+                body: command.data.toJSON(),
+            },
+        ).then(console.log(`[INFO] - Depoloyed (/) command ${name}`)).catch((err) => console.error(`[DEPLOY] - Error in deployment command ${name} - ${err}`));
+        console.log('[INFO] - Deployed (/) commands');
+    }
+}
 
 client.once(Events.ClientReady, readyClient => {
     console.log(`[INFO] - Logged in as ${readyClient.user.tag}`);
@@ -54,49 +78,6 @@ client.once(Events.ClientReady, readyClient => {
 //     }
 //     mongo_client.close();
 // })
-async function loadCommands() {
-    // Setting up the possible commands of the client
-client.commands = new Collection();
-
-const c = await import('./commands/commands.js');
-
-for (const name in c.default)   {
-    await rest.post(
-        Routes.applicationCommands(process.env.APP_ID),
-        {
-            headers: {
-                'content-type':'application/json',
-                'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
-            },
-            body: c.commands[name].data.toJSON(),
-        },
-    );
-}
-const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-// Deploy of commands
-// (async () => {
-//     try {
-//         console.log('[INFO] - Deploying (/) commands');
-
-//         client.commands.forEach(async element => {
-//             await rest.post(
-//                 Routes.applicationCommands(process.env.APP_ID),
-//                 {
-//                     headers: {
-//                         'content-type':'application/json',
-//                         'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
-//                     },
-//                     body: await element.data.toJSON(),
-//                 },
-//             );
-//         });
-
-//         console.log('[INFO] - Depoloyed (/) commands');
-//     } catch (error) {
-//         console.error(error);
-//     }
-// })();
-};
 
 // Listener that execute interactions
 client.on(Events.InteractionCreate, async interaction => {
