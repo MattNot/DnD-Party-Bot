@@ -59,25 +59,20 @@ async function loadCommands() {
 client.commands = new Collection();
 
 const c = await import('./commands/commands.js');
-const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-console.log('[INFO] - Deploying (/) commands');
+
 for (const name in c.default)   {
-    try {
-        await rest.post(
-            Routes.applicationCommands(process.env.APP_ID),
-            {
-                headers: {
-                    'content-type':'application/json',
-                    'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
-                },
-                body: c.commands[name].data.toJSON(),
+    await rest.post(
+        Routes.applicationCommands(process.env.APP_ID),
+        {
+            headers: {
+                'content-type':'application/json',
+                'Authorization':`Bot ${process.env.DISCORD_TOKEN}`,
             },
-        );
-    } catch (error) {
-        console.error(`[ERROR] Error while deploying commands - ${error}`);
-    }
+            body: c.commands[name].data.toJSON(),
+        },
+    );
 }
-console.log('[INFO] - Depoloyed (/) commands');
+const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 // Deploy of commands
 // (async () => {
 //     try {
