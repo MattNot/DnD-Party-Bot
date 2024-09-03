@@ -6,7 +6,7 @@
   "main": "app.js",
   "scripts": {
     "test": "node --test --test-force-exit --test-name-pattern='.*\\.test\\.js'",
-    "startup": "node app.js > log.txt 2>error.txt"
+    "startup": "node app.js"
   },
   "repository": {
     "type": "git",

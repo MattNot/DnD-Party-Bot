@@ -50,9 +50,12 @@ export default {
             const guild = await interaction?.guild;
             if (result) {
                 // TODO: Check on user's roles return error if already with role
-                interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_Player`));
+                await guild.roles.fetch();
+                let member = await guild.members.fetch(interaction.options.get('user').value);
+                member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_Player`));
                 console.log(`[INFO : ${guild.name}] - Player Role assigned`);
                 await campaigns.updateOne({name:c_n}, {$push: {'players':interaction.options.get('user').value}});
+                // TODO: Add user's name to the reply?
                 interaction.editReply({
                     content: locales[interaction.locale]['user_added'] ?? 'User was added to the campaign',
                     ephemeral: false,

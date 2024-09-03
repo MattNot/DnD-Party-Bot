@@ -44,35 +44,38 @@ export default {
         ),
     async execute(interaction) {
         interaction.deferReply();
+        await interaction.member.roles.fetch();
         // Can create no campaign
-        if (interaction.member.roles.cache.some(r => r.name === 'Newbie'))  {
+        if (interaction.member.roles?.cache.some(r => r.name === 'Newbie'))  {
             interaction.editReply({content:locales[interaction.locale]['Newbie'] ?? 'You are too low level to create a campaign!', ephemeral: false});
             return;
         }
         // Can create only one
-        if (interaction.member.cache.some(r => r.name === 'Paladino del Sole'))   {
-            try {
-                await mongo_client.connect();
-                let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
+        // FIXME: Non funziona bene la ricerca, risulta già un utente con una campagna quando non è vero
+        // if (interaction.member.roles?.cache.some(r => r.name === 'Paladino del Sole'))   {
+        //     try {
+        //         await mongo_client.connect();
+        //         let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);
                 
-                console.log('[INFO] - Checking permission to create a campaign');
-                // TODO: Check if it works otherwise, elements.dm
-                const res = await campaigns.findOne({dm: interaction.user}).then(async function (result) {
-                    if (!result)    {
-                        interaction.editReply({content:locales[interaction.locale]['Paladin_already'] ?? 'You are too low level to create a campaign!', ephemeral: false});
-                        return false;
-                    } else {
-                        return true;
-                    }
-                });
-                if (!res)    {
-                    return;
-                }
-            } catch (error) {
-                console.error(error);
-                interaction.editReply({content: 'An error has occurred', ephemeral: false});
-            }
-        }
+        //         console.log('[INFO] - Checking permission to create a campaign');
+        //         // TODO: Check if it works otherwise, elements.dm
+        //         const res = await campaigns.findOne({dm: interaction.user}).then(async function (result) {
+        //             // Most probably il problema è qua: se result === undefined allora !result === true e quindi potrebbe essere che non esiste, ma anche che c'è stato un problema con il db o peggio, con la promise
+        //             if (!result)    {
+        //                 interaction.editReply({content:locales[interaction.locale]['Paladin_already'] ?? 'You are too low level to create a campaign!', ephemeral: false});
+        //                 return false;
+        //             } else {
+        //                 return true;
+        //             }
+        //         });
+        //         if (!res)    {
+        //             return;
+        //         }
+        //     } catch (error) {
+        //         console.error(error);
+        //         interaction.editReply({content: 'An error has occurred', ephemeral: false});
+        //     }
+        // }
         try {
             // Connect the client to the server	(optional starting in v4.7)
             await mongo_client.connect();

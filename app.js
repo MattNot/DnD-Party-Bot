@@ -1,9 +1,11 @@
 import { config } from 'dotenv';
+import { Logger } from './util/logger.mjs';
 import { REST, Routes, Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import * as commands from './commands/commands.js';
 
 config();
+const l = new Logger('log.txt', 'error.txt', false);
 
 const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWD}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD`;
 
@@ -15,7 +17,7 @@ const mongo_client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
-console.log('[Mongo Connection] - Connection started');
+l.log('[Mongo Connection] - Connection started');
 
 const client = new Client({intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds], disableEveryone: false});
 
@@ -27,7 +29,7 @@ async function loadCommands()    {
     for (const name in commands.default)   {
         const command = commands.default[name];
         client.commands.set(command.data.name, command);
-        console.log('[INFO] - Deploying (/) commands');
+        l.log('[INFO] - Deploying (/) commands');
         await rest.post(
             Routes.applicationCommands(process.env.APP_ID),
             {
@@ -37,13 +39,13 @@ async function loadCommands()    {
                 },
                 body: command.data.toJSON(),
             },
-        ).then(console.log(`[INFO] - Depoloyed (/) command ${name}`)).catch((err) => console.error(`[DEPLOY] - Error in deployment command ${name} - ${err}`));
-        console.log('[INFO] - Deployed (/) commands');
+        ).then(l.log(`[INFO] - Depoloyed (/) command ${name}`)).catch((err) => l.error(`[DEPLOY] - Error in deployment command ${name} - ${err}`));
+        l.log('[INFO] - Deployed (/) commands');
     }
 }
 
 client.once(Events.ClientReady, readyClient => {
-    console.log(`[INFO] - Logged in as ${readyClient.user.tag}`);
+    l.log(`[INFO] - Logged in as ${readyClient.user.tag}`);
     loadCommands();
 });
 // FIXME: Don't know why but, when on prod server it crashes everything for an ECONNREFUSED unexplainable atm
@@ -53,7 +55,7 @@ client.once(Events.ClientReady, async c => {
     let cursor = ann.find({});
     while (await cursor.hasNext()) {
         cursor.next().then(res => {
-            console.info(`[INFO] - Addind listeners on ${res.guild}`);
+            l.info(`[INFO] - Addind listeners on ${res.guild}`);
             // Create event listener
             c.on(Events.GuildScheduledEventCreate, async (createdScheduledEventUrl) => {
                 res.guild.scheduledEvents.fetch(createdScheduledEventUrl).then((scheduledEvent) => {
@@ -73,7 +75,7 @@ client.once(Events.ClientReady, async c => {
                     res.channel.send(`@everyone, mi dispiace informarvi che la sessione ${scheduledEvent.name} è stata cancellata`);
                 });
             });
-            console.info(`[INFO] - Added listeners on ${res.guild}`);
+            l.info(`[INFO] - Added listeners on ${res.guild}`);
         });
     }
     mongo_client.close();
@@ -86,14 +88,15 @@ client.on(Events.InteractionCreate, async interaction => {
     const command = await interaction.client.commands.get(interaction.commandName);
 
     if (!command)   {
-        console.error(`[ERROR] - No command matching ${interaction.commandName} found`);
+        l.error(`[ERROR] - No command matching ${interaction.commandName} found`);
         return;
     }
 
     try {
+        // Remember the typing, it's a ChatInputCommandInteraction
         await command.execute(interaction);
     } catch (error) {
-        console.error(`[ERROR] - ${error}`);
+        l.error(`[ERROR] - ${error}`);
         if (interaction.replied || interaction.deferred)    {
             await interaction.followUp({content: 'There was an error while executing this command!', ephemeral: true});
         }   else    {
