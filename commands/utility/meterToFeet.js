@@ -22,6 +22,6 @@ export default  {
         let n = Number(interaction.options.get('meters').value);
         if (!n)
             interaction.reply('Invalid number inserted');
-        interaction.reply(Number(n/3.28084));
+        interaction.reply(Number(n/3.28084).toString());
     }
 }
