@@ -40,6 +40,8 @@ export default {
             .setRequired(true);
         }),
     async execute(interaction) {
+        // FIXME: Problema quando si inserisce l'utente con mouse
+        // Forse problemi con il GC, potenzialmente l'interaction è undefined per motivo boh. Da controllare il defer (?)
         interaction.deferReply();
         await mongo_client.connect();
         let campaigns = mongo_client.db(process.env.MONGO_DB_NAME).collection(process.env.MONGO_COLLECTION_NAME);

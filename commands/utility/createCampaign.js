@@ -44,7 +44,8 @@ export default {
         ),
     async execute(interaction) {
         interaction.deferReply();
-        await interaction.member.roles.fetch();
+        // FIXME: not a function?
+        // await interaction.member.roles.fetch();
         // Can create no campaign
         if (interaction.member.roles?.cache.some(r => r.name === 'Newbie'))  {
             interaction.editReply({content:locales[interaction.locale]['Newbie'] ?? 'You are too low level to create a campaign!', ephemeral: false});
@@ -113,6 +114,7 @@ export default {
                         color: getRandomColor(),
                         permissions: PermissionFlagsBits.ViewChannel,
                     });
+                    const role_e = await guild.roles.cache.find(role => role.name = 'everyone');
                     // Creation of the custom category and attached channels
                     console.log(`[INFO : ${guild.name}] - Starting to create channels`);
                     const category = await guild.channels.create({
@@ -125,6 +127,9 @@ export default {
                     });
                     await category.permissionOverwrites.create(role_pl, {
                         ViewChannel: true,
+                    });
+                    await category.permissionOverwrites.edit(role_e, {
+                        ViewChannel: false,
                     });
                     console.log(`[INFO : ${guild.name}] - Roles created and deployed`);
                     interaction?.member.roles.add(guild.roles.cache.find(role => role.name === `${c_n}_DM`));
