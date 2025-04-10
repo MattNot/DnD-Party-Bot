@@ -1,3 +1,4 @@
+from typing import Optional
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -12,7 +13,7 @@ class MetersToFeet(commands.Cog):
         description="Convert meters to feet"
     )
     @app_commands.describe(meters="Amount to convert into feet")
-    async def meters_to_feet(self, interaction: discord.Interaction, meters: float, approx: bool = True):
+    async def meters_to_feet(self, interaction: discord.Interaction, meters: float, approx: Optional[bool] = True):
         if meters is None:
             await interaction.response.send_message("Invalid number inserted", ephemeral=True)
             return
@@ -26,7 +27,7 @@ class MetersToFeet(commands.Cog):
         description="Convert to meters to feet"
     )
     @app_commands.describe(feet="Amount to convert into feet")
-    async def f2m(self, interaction: discord.Interaction, feet: float, approx: bool = True):
+    async def m2f(self, interaction: discord.Interaction, feet: float, approx: Optional[bool] = True):
         await self.feet_to_meters(interaction, feet, approx)
 
 async def setup(bot: commands.Bot):
