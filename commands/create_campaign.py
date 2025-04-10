@@ -1,0 +1,102 @@
+import os
+import random
+import logging
+import discord
+from discord import app_commands, ChannelType, Permissions, Colour
+from discord.ext import commands
+from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()
+
+locales = {
+    "it": {
+        "already_exists": "Il nome selezionato esiste già",
+        "created_success": "La campagna è stata creata correttamente",
+        "Newbie": "Sei di livello troppo basso per creare una campagna!",
+        "Paladin_already": "Hai già una campagna! Sali di livello per poterne creare delle altre!",
+    }
+}
+
+def get_random_color() -> Colour:
+    return Colour(random.randint(0, 0xFFFFFF))
+
+class CreateCampaign(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    @app_commands.command(
+        name="create_campaign",
+        description="Create your DND campaign!"
+    )
+    @app_commands.describe(name="Name of your campaign")
+    async def create_campaign(self, interaction: discord.Interaction, name: str):
+        await interaction.response.defer(ephemeral=False)
+        
+        member = interaction.user
+        
+        if any(role.name == "Newbie" for role in member.roles):
+            locale = interaction.locale if interaction.locale in locales else "it"
+            await interaction.followup.send(content=locales[locale]["Newbie"])
+            return
+
+        mongo_uri = f"mongodb+srv://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
+        mongo_client = MongoClient(mongo_uri)
+        db = mongo_client[os.getenv("MONGO_DB_NAME")]
+        campaigns = db[os.getenv("MONGO_COLLECTION_NAME")]
+
+        try:
+            if campaigns.find_one({"name": name}):
+                locale = interaction.locale if interaction.locale in locales else "it"
+                await interaction.followup.send(content=locales[locale]["already_exists"], ephemeral=True)
+                logging.warning("Campaign already exists")
+                return
+            else:
+                campaigns.insert_one({
+                    "name": name,
+                    "elements": {
+                        "dm": interaction.user.id,
+                        "players": []
+                    }
+                })
+                guild = interaction.guild
+                logging.info(f"[INFO : {guild.name}] - Starting to create roles")
+
+                role_dm = await guild.create_role(
+                    name=f"{name}_DM",
+                    colour=get_random_color(),
+                    permissions=Permissions(view_channel=True, mute_members=True)
+                )
+                role_pl = await guild.create_role(
+                    name=f"{name}_Player",
+                    colour=get_random_color(),
+                    permissions=Permissions(view_channel=True)
+                )
+                role_e = guild.default_role  # "@everyone"
+
+                logging.info(f"[INFO : {guild.name}] - Starting to create channels")
+                category = await guild.create_category(name=name)
+                await category.set_permissions(role_dm, view_channel=True, mute_members=True)
+                await category.set_permissions(role_pl, view_channel=True)
+                await category.set_permissions(role_e, view_channel=False)
+
+                await guild.create_voice_channel(name=f"{name}_vocal", category=category, type=ChannelType.stage_voice)
+                await guild.create_text_channel(name=f"{name}_text", category=category)
+                await guild.create_text_channel(name=f"{name}_meme", category=category)
+                await guild.create_text_channel(name=f"{name}_organize", category=category)
+
+                await member.add_roles(role_dm)
+
+                locale = interaction.locale if interaction.locale in locales else "it"
+                await interaction.followup.send(content=locales[locale]["created_success"], ephemeral=False)
+                logging.info("Campaign successfully created")
+        except Exception as e:
+            logging.error(f"[CreateCampaign] An error occurred: {e}")
+            await interaction.followup.send(content="An error has occurred", ephemeral=False)
+        finally:
+            mongo_client.close()
+            logging.info("Mongo Connection closed")
+
+# Cog setup
+async def setup(bot: commands.Bot):
+    await bot.add_cog(CreateCampaign(bot))
