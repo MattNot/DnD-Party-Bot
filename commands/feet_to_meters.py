@@ -20,6 +20,14 @@ class FeetToMeters(commands.Cog):
         result = ceil(feet / 3.28084) if approx else feet / 3.28084
 
         await interaction.response.send_message(str(result))
+    
+    @app_commands.command(
+        name="f2m",
+        description="Convert feet to meters"
+    )
+    @app_commands.describe(feet="Amount to convert into meters")
+    async def f2m(self, interaction: discord.Interaction, feet: float, approx: bool = True):
+        await self.feet_to_meters(interaction, feet, approx)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(FeetToMeters(bot))
