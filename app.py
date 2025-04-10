@@ -8,7 +8,7 @@ import sys
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename='./bot.log', level=logging.INFO)
 
 intents = discord.Intents.default()
 intents.members = True
