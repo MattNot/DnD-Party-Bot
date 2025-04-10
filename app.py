@@ -8,7 +8,7 @@ import sys
 
 load_dotenv()
 
-logging.basicConfig(filename='./bot.log', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename='./bot.log', level=logging.INFO)
 
 intents = discord.Intents.default()
 intents.members = True
