@@ -61,11 +61,11 @@ class AddToCampaign(commands.Cog):
                     await member.add_roles(role)
                     logging.info(f"[INFO : {guild.name}] - Player Role assigned")
                     campaigns.update_one({"name": name}, {"$push": {"players": user.id}})
-                    await interaction.followup.send(content=f"{locales[locale]["user_added"]}{user.name}")
+                    await interaction.followup.send(content=f"{locales[locale]['user_added']}{user.name}")
                 else:
                     await interaction.followup.send(content=locales[locale]["player_role_not_found"])
             else:
-                await interaction.followup.send(content=f"{user.name}{locales[locale]["user_already"]}")
+                await interaction.followup.send(content=f"{user.name}{locales[locale]['user_already']}")
         except Exception as e:
             logging.error(f"[ERROR] - {e}")
             await interaction.followup.send(content=locales[locale]["generic_error"])
