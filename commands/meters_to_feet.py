@@ -25,7 +25,7 @@ class MetersToFeet(commands.Cog):
     async def meters_to_feet(self, interaction: discord.Interaction, meters: float, approx: Optional[bool] = True):
         if meters is None:
             locale = interaction.locale if interaction.locale in locales else "eng"
-            await interaction.response.send_message(content=f"{locales[locale]["invalid_number"]}", ephemeral=True)
+            await interaction.response.send_message(content=locales[locale]["invalid_number"], ephemeral=True)
             return
 
         result = ceil(meters * 3.28084) if approx else meters * 3.28084

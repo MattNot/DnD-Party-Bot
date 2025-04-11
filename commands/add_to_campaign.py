@@ -53,7 +53,7 @@ class AddToCampaign(commands.Cog):
             if result:
                 member = guild.get_member(user.id)
                 if member is None:
-                    await interaction.followup.send(content=f"{locales[locale]["member_not_found"]}")
+                    await interaction.followup.send(content=locales[locale]["member_not_found"])
                     return
 
                 role = next((r for r in guild.roles if r.name == f"{name}_Player"), None)
@@ -63,12 +63,12 @@ class AddToCampaign(commands.Cog):
                     campaigns.update_one({"name": name}, {"$push": {"players": user.id}})
                     await interaction.followup.send(content=f"{locales[locale]["user_added"]}{user.name}")
                 else:
-                    await interaction.followup.send(content=f"{locales[locale]["player_role_not_found"]}")
+                    await interaction.followup.send(content=locales[locale]["player_role_not_found"])
             else:
                 await interaction.followup.send(content=f"{user.name}{locales[locale]["user_already"]}")
         except Exception as e:
             logging.error(f"[ERROR] - {e}")
-            await interaction.followup.send(content=f"{locales[locale]["generic_error"]}")
+            await interaction.followup.send(content=locales[locale]["generic_error"])
         finally:
             client_mongo.close()
 
@@ -80,7 +80,7 @@ class AddToCampaign(commands.Cog):
     async def add_error(self, interaction: "Interaction", error: Exception):
         logging.error(f"Error in add command: {error}")
         locale = interaction.locale if interaction.locale in locales else "eng"
-        await interaction.followup.send(content=f"{locales[locale]["generic_error"]}")
+        await interaction.followup.send(content=locales[locale]["generic_error"])
 
 # Cog setup
 async def setup(bot: commands.Bot):
