@@ -15,6 +15,14 @@ locales = {
         "created_success": "La campagna è stata creata correttamente",
         "Newbie": "Sei di livello troppo basso per creare una campagna!",
         "Paladin_already": "Hai già una campagna! Sali di livello per poterne creare delle altre!",
+        "generic_error": "Si è verificato un errore",
+    },
+    "eng": {
+        "already_exists": "Name selected already exists",
+        "created_success": "Campaign created successfully",
+        "Newbie": "You have too low level to create a campaign!",
+        "Paladin_already": "You already have a campaign! Level up to create other campaign!",
+        "generic_error": "An error has occurred",
     }
 }
 
@@ -36,7 +44,7 @@ class CreateCampaign(commands.Cog):
         member = interaction.user
         
         if any(role.name == "Newbie" for role in member.roles):
-            locale = interaction.locale if interaction.locale in locales else "it"
+            locale = interaction.locale if interaction.locale in locales else "eng"
             await interaction.followup.send(content=locales[locale]["Newbie"])
             return
 
@@ -47,7 +55,7 @@ class CreateCampaign(commands.Cog):
 
         try:
             if campaigns.find_one({"name": name}):
-                locale = interaction.locale if interaction.locale in locales else "it"
+                locale = interaction.locale if interaction.locale in locales else "eng"
                 await interaction.followup.send(content=locales[locale]["already_exists"], ephemeral=True)
                 logging.warning("Campaign already exists")
                 return
@@ -87,12 +95,12 @@ class CreateCampaign(commands.Cog):
 
                 await member.add_roles(role_dm)
 
-                locale = interaction.locale if interaction.locale in locales else "it"
+                locale = interaction.locale if interaction.locale in locales else "eng"
                 await interaction.followup.send(content=locales[locale]["created_success"], ephemeral=False)
                 logging.info("Campaign successfully created")
         except Exception as e:
             logging.error(f"[CreateCampaign] An error occurred: {e}")
-            await interaction.followup.send(content="An error has occurred", ephemeral=False)
+            await interaction.followup.send(content=locales[locale]["generic_error"], ephemeral=False)
         finally:
             mongo_client.close()
             logging.info("Mongo Connection closed")

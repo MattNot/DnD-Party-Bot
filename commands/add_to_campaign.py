@@ -10,8 +10,18 @@ load_dotenv()
 
 locales = {
     "it": {
-        "user_added": "L'utente è stato inserito nella campagna",
+        "user_added": "L'utente è stato inserito nella campagna - ",
         "user_already": "L'utente è già stato inserito!",
+        "player_role_not_found":"Il ruolo player non è stato trovato nel server!",
+        "member_not_found":"L'utente non è stato trovato nel server!",
+        "generic_error":"Errore verificatosi nel processo del comando.",
+    },
+    "eng": {
+        "user_added": "User added to campaign - ",
+        "user_already": " was already added!",
+        "player_role_not_found":"Player role not found in the server!",
+        "member_not_found":"User not found in the server!",
+        "generic_error":"An error occurred while processing the command.",
     }
 }
 
@@ -30,7 +40,7 @@ class AddToCampaign(commands.Cog):
         description="Add a user to your campaign"
     )
     async def add(self, interaction: "Interaction", name: str, user: "User"):
-        locale = interaction.locale if interaction.locale in locales else "it"
+        locale = interaction.locale if interaction.locale in locales else "eng"
 
         await interaction.response.defer(ephemeral=False)
 
@@ -43,7 +53,7 @@ class AddToCampaign(commands.Cog):
             if result:
                 member = guild.get_member(user.id)
                 if member is None:
-                    await interaction.followup.send("Member not found in the server!")
+                    await interaction.followup.send(content=f"{locales[locale]["member_not_found"]}")
                     return
 
                 role = next((r for r in guild.roles if r.name == f"{name}_Player"), None)
@@ -51,14 +61,14 @@ class AddToCampaign(commands.Cog):
                     await member.add_roles(role)
                     logging.info(f"[INFO : {guild.name}] - Player Role assigned")
                     campaigns.update_one({"name": name}, {"$push": {"players": user.id}})
-                    await interaction.followup.send(content=locales[locale]["user_added"])
+                    await interaction.followup.send(content=f"{locales[locale]["user_added"]}{user.name}")
                 else:
-                    await interaction.followup.send("Player role not found in the server!")
+                    await interaction.followup.send(content=f"{locales[locale]["player_role_not_found"]}")
             else:
-                await interaction.followup.send(content=locales[locale]["user_already"])
+                await interaction.followup.send(content=f"{user.name}{locales[locale]["user_already"]}")
         except Exception as e:
             logging.error(f"[ERROR] - {e}")
-            await interaction.followup.send("An error occurred while processing the command.")
+            await interaction.followup.send(content=f"{locales[locale]["generic_error"]}")
         finally:
             client_mongo.close()
 
@@ -69,7 +79,8 @@ class AddToCampaign(commands.Cog):
     @add.error
     async def add_error(self, interaction: "Interaction", error: Exception):
         logging.error(f"Error in add command: {error}")
-        await interaction.followup.send("An error occurred in the command.")
+        locale = interaction.locale if interaction.locale in locales else "eng"
+        await interaction.followup.send(content=f"{locales[locale]["generic_error"]}")
 
 # Cog setup
 async def setup(bot: commands.Bot):
