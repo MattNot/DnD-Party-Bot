@@ -124,7 +124,6 @@ def calculate_optimal_raises(dice_results, double_raise_15=False):
     used_indices = set()
     for combo_values, _, _ in best_combinations:
         # Extract the original dice from the combination values
-        original_indices = []
         remaining_indices = list(range(len(dice)))
         
         # For each value in our combo, find a matching die that hasn't been used yet
@@ -169,16 +168,17 @@ class CalculateRaises(commands.Cog):
         name="7sr",
         description="Calculate 7th sea raises given a list of roll dice"
     )
-    @app_commands.describe(rolls="Comma separeted dice roll results, pass true if your skill has 3 points or more")
+    @app_commands.describe(rolls="Comma separeted dice roll results")
+    @app_commands.describe(use_15="Pass true if your skill has 3 points or more")
     async def seven_sea_raises(self, interaction: discord.Interaction, rolls: str, use_15: Optional[bool] = False):
         if rolls is None:
             locale = interaction.locale if interaction.locale in locales else "eng"
             await interaction.response.send_message(content=locales[locale]["invalid_number"], ephemeral=True)
             return
 
-        rolls: list = rolls.split(",")        
+        rolls: list[int] = [int(x) for x in rolls.replace(' ','').split(',')]
         for roll in rolls: # Better to have a O(n) before computation that is greedy
-            if not roll.isdigit():
+            if not roll.is_integer:
                 locale = interaction.locale if interaction.locale in locales else "eng"
                 await interaction.response.send_message(content=locales[locale]["invalid_number"], ephemeral=True)
                 return
