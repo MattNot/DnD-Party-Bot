@@ -175,15 +175,17 @@ class CalculateRaises(commands.Cog):
             locale = interaction.locale if interaction.locale in locales else "eng"
             await interaction.response.send_message(content=locales[locale]["invalid_number"], ephemeral=True)
             return
+        
+        rolls_int: list[int]
+        try:
+            rolls_int = [int(x) for x in rolls.replace(' ','').split(',')]
+        except ValueError:
+            # mammt
+            locale = interaction.locale if interaction.locale in locales else "eng"
+            await interaction.response.send_message(content=locales[locale]["invalid_number"], ephemeral=True)
+            return
 
-        rolls: list[int] = [int(x) for x in rolls.replace(' ','').split(',')]
-        for roll in rolls: # Better to have a O(n) before computation that is greedy
-            if not roll.is_integer:
-                locale = interaction.locale if interaction.locale in locales else "eng"
-                await interaction.response.send_message(content=locales[locale]["invalid_number"], ephemeral=True)
-                return
-
-        await interaction.response.send_message(str( await display_raises_result(rolls, use_15)))
+        await interaction.response.send_message(str( await display_raises_result(rolls_int, use_15)))
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(CalculateRaises(bot))
