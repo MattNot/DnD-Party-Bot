@@ -163,56 +163,6 @@ async def display_raises_result(dice_roll, double_raise_15=False):
     #DEBUG print(result_str) 
     return result_str
 
-# Test cases
-if __name__ == "__main__":
-    # Test with duplicates
-    test_roll_duplicates = [5, 5, 5, 5]
-    print("=== Test with duplicate values [5, 5, 5, 5] ===")
-    display_raises_result(test_roll_duplicates)
-    
-    # Previous problematic test case
-    test_roll1 = [1, 2, 3, 7, 8, 9, 10]
-    print("\n=== With Standard Rules ===")
-    display_raises_result(test_roll1)
-    
-    print("\n=== With Double Raise for 15 ===")
-    display_raises_result(test_roll1, double_raise_15=True)
-    
-    # Additional test cases
-    test_roll2 = [4, 4, 6, 6]
-    print("\n=== Test with [4, 4, 6, 6] ===")
-    display_raises_result(test_roll2)
-    
-    test_roll3 = [10, 10, 5, 5]
-    print("\n=== Test with [10, 10, 5, 5] ===")
-    display_raises_result(test_roll3)
-    print("\n=== Test with [10, 10, 5, 5] and Double Raise for 15 ===")
-    display_raises_result(test_roll3, double_raise_15=True)
-    
-    
-    print("Target 10:")
-    print(display_raises_result([1, 2, 3, 7, 8, 9, 10]))
-    print(display_raises_result([5, 5, 5, 5]))
-    print(display_raises_result([7, 8, 7, 8]))
-    print(display_raises_result([1, 1, 9, 9]))
-    print(display_raises_result([10, 10, 10]))
-    print(display_raises_result([5, 5, 5, 10]))
-    print(display_raises_result([6, 4, 6, 4]))
-    print(display_raises_result([3, 3, 3, 3], True))
-    print(display_raises_result([3, 3, 7]))
-    print(display_raises_result([3, 3, 3, 7, 7]))
-    
-    print("\nTarget 15 (moltiplicato per 2) e poi Target 10 con i rimanenti:")
-    print(display_raises_result([7, 8, 7, 8],         True))
-    print(display_raises_result([15, 15, 15],         True))
-    print(display_raises_result([7, 8, 2, 13],        True))
-    print(display_raises_result([1, 2, 14, 16, 9, 1], True)) # Esempio con rimanenti
-    print(display_raises_result([16, 16, 9, 1, 9, 1], True))
-    
-
-
-
-
 
 class CalculateRaises(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -222,7 +172,7 @@ class CalculateRaises(commands.Cog):
         name="7sr",
         description="Calculate 7th sea raises given a list of roll dice"
     )
-    @app_commands.describe(feet="Comma separeted dice roll results, pass true if your skill has 3 points or more")
+    @app_commands.describe(rolls="Comma separeted dice roll results", use_15="pass true if your skill has 3 points or more")
     async def seven_sea_raises(self, interaction: discord.Interaction, rolls: str, use_15: Optional[bool] = False):
         if rolls is None:
             locale = interaction.locale if interaction.locale in locales else "eng"
