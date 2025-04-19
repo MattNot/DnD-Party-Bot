@@ -3,12 +3,9 @@ import os
 import logging
 import discord
 from discord.ext import commands
-import discord.ext.commands
 from dotenv import load_dotenv
 import asyncio
 import sys
-
-import discord.ext
 
 load_dotenv()
 
@@ -19,6 +16,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True  # Don't think its really necessary tho
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
