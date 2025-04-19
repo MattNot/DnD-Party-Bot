@@ -1,9 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from math import ceil
 from typing import Optional
-from collections import Counter
 
 locales = {
     "it":   {
@@ -159,8 +157,7 @@ async def display_raises_result(dice_roll, double_raise_15=False):
     
     if unused_dice:
         result_str += f"Unused dice: {unused_dice} \n"
-    
-    #DEBUG print(result_str) 
+
     return result_str
 
 
@@ -172,7 +169,7 @@ class CalculateRaises(commands.Cog):
         name="7sr",
         description="Calculate 7th sea raises given a list of roll dice"
     )
-    @app_commands.describe(rolls="Comma separeted dice roll results", use_15="pass true if your skill has 3 points or more")
+    @app_commands.describe(rolls="Comma separeted dice roll results, pass true if your skill has 3 points or more")
     async def seven_sea_raises(self, interaction: discord.Interaction, rolls: str, use_15: Optional[bool] = False):
         if rolls is None:
             locale = interaction.locale if interaction.locale in locales else "eng"
