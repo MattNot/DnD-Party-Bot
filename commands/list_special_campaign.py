@@ -5,7 +5,7 @@ from pymongo.collection import Collection
 from dotenv import load_dotenv
 from os import getenv
 
-load_dotenv()
+load_dotenv(dotenv_path='./../.env')
 
 def get_special_campaigns_collection() -> "Collection":
     mongo_uri = f"mongodb+srv://{getenv('MONGO_USER')}:{getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
