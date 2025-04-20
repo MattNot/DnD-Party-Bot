@@ -8,7 +8,7 @@ from os import getenv
 load_dotenv()
 
 def get_special_campaigns_collection() -> "Collection":
-    mongo_uri = f"mongodb+srv://{getenv('MONGO_USER')}:{getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
+    mongo_uri = f"mongodb://{getenv('MONGO_USER')}:{getenv('MONGO_PASSWD')}@ac-f7n4bxh-shard-00-00.qxfls1g.mongodb.net:27017,ac-f7n4bxh-shard-00-01.qxfls1g.mongodb.net:27017,ac-f7n4bxh-shard-00-02.qxfls1g.mongodb.net:27017/?ssl=true&replicaSet=atlas-10lv5a-shard-0&authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
     client = MongoClient(mongo_uri)
     db = client[getenv("MONGO_DB_NAME")]
     return db[getenv("MONGO_SC_COLLECTION_NAME")], client
@@ -26,7 +26,7 @@ class ListSpecialCampaign(commands.Cog):
 
         specials, client_mongo = get_special_campaigns_collection()
 
-        documents = list(specials.find({}))
+        documents = specials.find({}).to_list()
         client_mongo.close()
 
         campaigns = []
