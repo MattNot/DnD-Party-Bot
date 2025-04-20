@@ -26,7 +26,7 @@ class ListSpecialCampaign(commands.Cog):
 
         specials, client_mongo = get_special_campaigns_collection()
 
-        documents = specials.find({}).to_list()
+        documents = list(specials.find({}))
         client_mongo.close()
 
         campaigns = []
