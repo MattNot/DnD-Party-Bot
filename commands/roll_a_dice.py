@@ -44,7 +44,7 @@ class RollADice(commands.Cog):
 
             total, breakdown = chosen
             if results:
-                nc = (set(results) - {chosen}).pop()[1]
+                nc = next(r[1] for r in results if r != chosen)
                 breakdown = f"""```diff
 + {chosen[1]}
 - {nc}
