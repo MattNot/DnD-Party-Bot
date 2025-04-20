@@ -22,6 +22,8 @@ class ListSpecialCampaign(commands.Cog):
         description="Guarda le prossime campagne GdR che stiamo preparando"
     )
     async def list_special_campaign(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=False)
+
         specials, client_mongo = get_special_campaigns_collection()
 
         documents = list(specials.find({}))
@@ -57,7 +59,7 @@ class ListSpecialCampaign(commands.Cog):
         rows = [format_row(p) for p in players_rows]
         table = "\n".join([header, separator] + rows)
 
-        await interaction.response.send_message(f"```txt\n{table}\n```")
+        await interaction.followup.send(f"```txt\n{table}\n```")
 
     async def campaign_autocomplete(self, interaction: Interaction, current: str):
         specials, client_mongo = get_special_campaigns_collection()
@@ -79,34 +81,34 @@ class ListSpecialCampaign(commands.Cog):
     @app_commands.describe(campaign="Il nome della campagna a cui vuoi unirti")
     @app_commands.autocomplete(campaign=campaign_autocomplete)
     async def join_campaign(self, interaction: Interaction, campaign: str):
+        await interaction.response.defer(ephemeral=False)
+
         specials, client_mongo = get_special_campaigns_collection()
 
         username = interaction.user.display_name
 
-        # Cerca il documento che ha come chiave la campagna
         doc = specials.find_one({campaign: {"$exists": True}})
 
         if not doc:
-            await interaction.response.send_message(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
+            await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
             client_mongo.close()
             return
 
         players = doc[campaign][0] if doc[campaign] else []
 
         if username in players:
-            await interaction.response.send_message(f"⚠️ Sei già iscritto a \"{campaign}\"!", ephemeral=True)
+            await interaction.followup.send(f"⚠️ Sei già iscritto a \"{campaign}\"!", ephemeral=True)
             client_mongo.close()
             return
 
         if len(players) >= 5:
-            await interaction.response.send_message(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 5 giocatori.", ephemeral=True)
+            await interaction.followup.send(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 5 giocatori.", ephemeral=True)
             client_mongo.close()
             return
 
-        # Aggiungi il nuovo player
         players.append(username)
         specials.update_one({"_id": doc["_id"]}, {"$set": {f"{campaign}": [players]}})
-        await interaction.response.send_message(f"✅ Ti sei unito a \"{campaign}\"!", ephemeral=True)
+        await interaction.followup.send(f"✅ Ti sei unito a \"{campaign}\"!", ephemeral=True)
 
         client_mongo.close()
 
@@ -134,25 +136,27 @@ class ListSpecialCampaign(commands.Cog):
     @app_commands.describe(campaign="Il nome della campagna da cui vuoi uscire")
     @app_commands.autocomplete(campaign=campaign_autocomplete_leave)
     async def leave_campaign(self, interaction: Interaction, campaign: str):
+        await interaction.response.defer(ephemeral=False)
+
         specials, client_mongo = get_special_campaigns_collection()
         username = interaction.user.display_name
 
         doc = specials.find_one({campaign: {"$exists": True}})
         if not doc:
-            await interaction.response.send_message(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
+            await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
             client_mongo.close()
             return
 
         players = doc[campaign][0] if doc[campaign] else []
 
         if username not in players:
-            await interaction.response.send_message(f"⚠️ Non sei iscritto a \"{campaign}\"!", ephemeral=True)
+            await interaction.followup.send(f"⚠️ Non sei iscritto a \"{campaign}\"!", ephemeral=True)
             client_mongo.close()
             return
 
         players.remove(username)
         specials.update_one({"_id": doc["_id"]}, {"$set": {f"{campaign}": [players]}})
-        await interaction.response.send_message(f"👋 Sei uscito da \"{campaign}\"!", ephemeral=True)
+        await interaction.followup.send(f"👋 Sei uscito da \"{campaign}\"!", ephemeral=True)
 
         client_mongo.close()
 
