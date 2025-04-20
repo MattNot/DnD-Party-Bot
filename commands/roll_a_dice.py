@@ -1,4 +1,3 @@
-import logging
 import random
 import re
 from discord import app_commands, Interaction
