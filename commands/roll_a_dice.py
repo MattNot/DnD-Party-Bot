@@ -43,6 +43,12 @@ class RollADice(commands.Cog):
                 chosen = self.roll_expression(roll)
 
             total, breakdown = chosen
+            if results:
+                nc = results[0][1] if results[0] == chosen else results[1][1]
+                breakdown = f"""```diff
+                + {chosen[1]}
+                - {nc}
+                ```"""
             response = locales[locale]["result"].format(
                 total=total,
                 breakdown="\n".join(breakdown)
@@ -55,7 +61,7 @@ class RollADice(commands.Cog):
     def roll_expression(self, expr: str):
         expr = expr.replace(' ', '')
 
-        pattern = re.compile(r'(?P<dice>(?P<diceSign>[+-]?)((?P<diceCount>\d+)?d(?P<diceType>4|6|8|10|12|20)))|(?P<constant>(?P<constantSign>[+-]?)\d+)')
+        pattern = re.compile(r'(?P<dice>(?P<diceSign>[+-]?)((?P<diceCount>\d+)?d(?P<diceType>4|6|8|10|12|20|100)))|(?P<constant>(?P<constantSign>[+-]?)\d+)')
 
         total = 0
         breakdown = []
