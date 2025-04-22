@@ -25,17 +25,19 @@ class ListSpecialCampaign(commands.Cog):
 
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT name, players FROM campaigns")
+        # Prendi tutte le campagne dalla tabella
+        cursor.execute("SELECT campaign, players FROM campaigns")
         rows = cursor.fetchall()
         conn.close()
 
+        # Mappa nome->lista giocatori
         campaign_to_players = {
-            name: json.loads(players) if players else []
-            for name, players in rows
+            campaign: json.loads(players) if players else []
+            for campaign, players in rows
         }
 
         campaigns = list(campaign_to_players.keys())
-        max_players = max((len(p) for p in campaign_to_players.values()), default=0)
+        max_players = max((len(pl) for pl in campaign_to_players.values()), default=0)
 
         players_rows = []
         for i in range(max_players):
@@ -45,14 +47,20 @@ class ListSpecialCampaign(commands.Cog):
             ]
             players_rows.append(row)
 
-        col_widths = [max(len(str(row[i])) for row in [campaigns] + players_rows) for i in range(len(campaigns))]
+        # Calcola larghezze
+        col_widths = [
+            max(len(str(r[i])) for r in [campaigns] + players_rows)
+            for i in range(len(campaigns))
+        ]
 
-        def format_row(row):
-            return "| " + " | ".join(f"{cell:<{col_widths[i]}}" for i, cell in enumerate(row)) + " |"
+        def format_row(r):
+            return "| " + " | ".join(
+                f"{cell:<{col_widths[i]}}" for i, cell in enumerate(r)
+            ) + " |"
 
         header = format_row(campaigns)
         separator = "|" + "|".join("-" * (w + 2) for w in col_widths) + "|"
-        rows = [format_row(p) for p in players_rows]
+        rows = [format_row(r) for r in players_rows]
         table = "\n".join([header, separator] + rows)
 
         await interaction.followup.send(f"```txt\n{table}\n```")
@@ -60,11 +68,15 @@ class ListSpecialCampaign(commands.Cog):
     async def campaign_autocomplete(self, interaction: Interaction, current: str):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM campaigns WHERE name LIKE ?", (f"%{current}%",))
+        # Suggerisci campagne esistenti
+        cursor.execute(
+            "SELECT campaign FROM campaigns WHERE campaign LIKE ?",
+            (f"%{current}%",)
+        )
         campaigns = [row[0] for row in cursor.fetchall()]
         conn.close()
 
-        return [app_commands.Choice(name=camp, value=camp) for camp in campaigns[:25]]
+        return [app_commands.Choice(name=c, value=c) for c in campaigns[:25]]
 
     @app_commands.command(
         name="join_campaign",
@@ -79,7 +91,10 @@ class ListSpecialCampaign(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT players FROM campaigns WHERE name = ?", (campaign,))
+        # Controlla esistenza campagna
+        cursor.execute(
+            "SELECT players FROM campaigns WHERE campaign = ?", (campaign,)
+        )
         row = cursor.fetchone()
         if not row:
             await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.")
@@ -94,7 +109,10 @@ class ListSpecialCampaign(commands.Cog):
             await interaction.followup.send(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 5 giocatori.")
         else:
             players.append(username)
-            cursor.execute("UPDATE campaigns SET players = ? WHERE name = ?", (json.dumps(players), campaign))
+            cursor.execute(
+                "UPDATE campaigns SET players = ? WHERE campaign = ?",
+                (json.dumps(players), campaign)
+            )
             conn.commit()
             await interaction.followup.send(f"✅ Ti sei unito a \"{campaign}\"!")
 
@@ -105,15 +123,15 @@ class ListSpecialCampaign(commands.Cog):
         cursor = conn.cursor()
         username = interaction.user.display_name
 
-        cursor.execute("SELECT name, players FROM campaigns")
-        campaigns = []
-        for name, players_json in cursor.fetchall():
+        cursor.execute("SELECT campaign, players FROM campaigns")
+        choices = []
+        for camp, players_json in cursor.fetchall():
             players = json.loads(players_json) if players_json else []
-            if username in players and current.lower() in name.lower():
-                campaigns.append(app_commands.Choice(name=name, value=name))
+            if username in players and current.lower() in camp.lower():
+                choices.append(app_commands.Choice(name=camp, value=camp))
 
         conn.close()
-        return campaigns[:25]
+        return choices[:25]
 
     @app_commands.command(
         name="leave_campaign",
@@ -128,7 +146,10 @@ class ListSpecialCampaign(commands.Cog):
         conn = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT players FROM campaigns WHERE name = ?", (campaign,))
+        # Controlla esistenza
+        cursor.execute(
+            "SELECT players FROM campaigns WHERE campaign = ?", (campaign,)
+        )
         row = cursor.fetchone()
         if not row:
             await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.")
@@ -141,12 +162,14 @@ class ListSpecialCampaign(commands.Cog):
             await interaction.followup.send(f"⚠️ Non sei iscritto a \"{campaign}\"!")
         else:
             players.remove(username)
-            cursor.execute("UPDATE campaigns SET players = ? WHERE name = ?", (json.dumps(players), campaign))
+            cursor.execute(
+                "UPDATE campaigns SET players = ? WHERE campaign = ?",
+                (json.dumps(players), campaign)
+            )
             conn.commit()
             await interaction.followup.send(f"👋 Sei uscito da \"{campaign}\"!")
 
         conn.close()
-
 
 # Cog setup
 async def setup(bot: commands.Bot):
