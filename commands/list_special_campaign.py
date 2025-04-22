@@ -25,31 +25,35 @@ class ListSpecialCampaign(commands.Cog):
 
         conn = get_connection()
         cursor = conn.cursor()
-        # Prendi tutte le campagne dalla tabella
-        cursor.execute("SELECT campaign, players FROM campaigns")
+        # Prendi tutte le campagne, giocatori e master dalla tabella
+        cursor.execute("SELECT campaign, players, master FROM campaigns")
         rows = cursor.fetchall()
         conn.close()
 
-        # Mappa nome->lista giocatori
-        campaign_to_players = {
-            campaign: json.loads(players) if players else []
-            for campaign, players in rows
+        # Mappa campagna -> (giocatori, master)
+        campaign_data = {
+            campaign: (json.loads(players) if players else [], master or "")
+            for campaign, players, master in rows
         }
 
-        campaigns = list(campaign_to_players.keys())
-        max_players = max((len(pl) for pl in campaign_to_players.values()), default=0)
+        campaigns = list(campaign_data.keys())
+        max_players = max((len(players) for players, _ in campaign_data.values()), default=0)
 
+        # Riga dei master
+        master_row = [campaign_data[c][1] for c in campaigns]
+
+        # Righe dei giocatori
         players_rows = []
         for i in range(max_players):
             row = [
-                campaign_to_players[camp][i] if i < len(campaign_to_players[camp]) else ""
-                for camp in campaigns
+                campaign_data[c][0][i] if i < len(campaign_data[c][0]) else ""
+                for c in campaigns
             ]
             players_rows.append(row)
 
-        # Calcola larghezze
+        # Calcola larghezze per ogni colonna
         col_widths = [
-            max(len(str(r[i])) for r in [campaigns] + players_rows)
+            max(len(str(r[i])) for r in [campaigns, master_row] + players_rows)
             for i in range(len(campaigns))
         ]
 
@@ -60,8 +64,9 @@ class ListSpecialCampaign(commands.Cog):
 
         header = format_row(campaigns)
         separator = "|" + "|".join("-" * (w + 2) for w in col_widths) + "|"
+        master_line = format_row(master_row)
         rows = [format_row(r) for r in players_rows]
-        table = "\n".join([header, separator] + rows)
+        table = "\n".join([header, separator, master_line, separator] + rows)
 
         await interaction.followup.send(f"```txt\n{table}\n```")
 
