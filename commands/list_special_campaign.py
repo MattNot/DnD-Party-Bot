@@ -1,17 +1,15 @@
 from discord import app_commands, Interaction
 from discord.ext import commands
-from pymongo.collection import Collection
 from dotenv import load_dotenv
 from os import getenv
-
-from util.db import MongoSync
+import sqlite3
 
 load_dotenv()
 
-def get_special_campaigns_collection() -> "Collection":
-    client = MongoSync.get_client()
-    db = client[getenv("MONGO_DB_NAME")]
-    return db[getenv("MONGO_SC_COLLECTION_NAME")], client
+DB_PATH = getenv("SQLITE_DB_PATH", "campaigns.db")
+
+def get_connection():
+    return sqlite3.connect(DB_PATH)
 
 class ListSpecialCampaign(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -24,20 +22,18 @@ class ListSpecialCampaign(commands.Cog):
     async def list_special_campaign(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=False)
 
-        specials, client_mongo = get_special_campaigns_collection()
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        campaigns = [row[0] for row in cursor.fetchall()]
 
-        documents = list(specials.find({}))
-        client_mongo.close()
-
-        campaigns = []
         campaign_to_players = {}
+        for camp in campaigns:
+            cursor.execute(f"SELECT player FROM '{camp}'")
+            players = [row[0] for row in cursor.fetchall()]
+            campaign_to_players[camp] = players
 
-        for doc in documents:
-            for key, value in doc.items():
-                if key == "_id":
-                    continue
-                campaigns.append(key)
-                campaign_to_players[key] = [str(player) for player in value[0]] if value and isinstance(value[0], list) else []
+        conn.close()
 
         max_players = max((len(players) for players in campaign_to_players.values()), default=0)
 
@@ -62,17 +58,13 @@ class ListSpecialCampaign(commands.Cog):
         await interaction.followup.send(f"```txt\n{table}\n```")
 
     async def campaign_autocomplete(self, interaction: Interaction, current: str):
-        specials, client_mongo = get_special_campaigns_collection()
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        campaigns = [row[0] for row in cursor.fetchall() if current.lower() in row[0].lower()]
+        conn.close()
 
-        campaigns = []
-        for doc in specials.find():
-            for key in doc.keys():
-                if key != "_id" and current.lower() in key.lower():
-                    campaigns.append(app_commands.Choice(name=key, value=key))
-
-        client_mongo.close()
-        return campaigns[:25]
-
+        return [app_commands.Choice(name=camp, value=camp) for camp in campaigns[:25]]
 
     @app_commands.command(
         name="join_campaign",
@@ -83,50 +75,47 @@ class ListSpecialCampaign(commands.Cog):
     async def join_campaign(self, interaction: Interaction, campaign: str):
         await interaction.response.defer(ephemeral=False)
 
-        specials, client_mongo = get_special_campaigns_collection()
-
-        username = interaction.user.display_name
-
-        doc = specials.find_one({campaign: {"$exists": True}})
-
-        if not doc:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (campaign,))
+        if not cursor.fetchone():
             await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
-            client_mongo.close()
+            conn.close()
             return
 
-        players = doc[campaign][0] if doc[campaign] else []
+        username = interaction.user.display_name
+        cursor.execute(f"SELECT player FROM '{campaign}'")
+        players = [row[0] for row in cursor.fetchall()]
 
         if username in players:
             await interaction.followup.send(f"⚠️ Sei già iscritto a \"{campaign}\"!", ephemeral=True)
-            client_mongo.close()
+            conn.close()
             return
 
         if len(players) >= 5:
             await interaction.followup.send(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 5 giocatori.", ephemeral=True)
-            client_mongo.close()
+            conn.close()
             return
 
-        players.append(username)
-        specials.update_one({"_id": doc["_id"]}, {"$set": {f"{campaign}": [players]}})
+        cursor.execute(f"INSERT INTO '{campaign}' (player) VALUES (?)", (username,))
+        conn.commit()
+        conn.close()
         await interaction.followup.send(f"✅ Ti sei unito a \"{campaign}\"!", ephemeral=True)
 
-        client_mongo.close()
-
-
     async def campaign_autocomplete_leave(self, interaction: Interaction, current: str):
-        specials, client_mongo = get_special_campaigns_collection()
+        conn = get_connection()
+        cursor = conn.cursor()
         username = interaction.user.display_name
-
         campaigns = []
-        for doc in specials.find():
-            for key in doc.keys():
-                if key == "_id":
-                    continue
-                players = doc[key][0] if doc[key] else []
-                if username in players and current.lower() in key.lower():
-                    campaigns.append(app_commands.Choice(name=key, value=key))
 
-        client_mongo.close()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        for (camp,) in cursor.fetchall():
+            cursor.execute(f"SELECT player FROM '{camp}'")
+            players = [row[0] for row in cursor.fetchall()]
+            if username in players and current.lower() in camp.lower():
+                campaigns.append(app_commands.Choice(name=camp, value=camp))
+
+        conn.close()
         return campaigns[:25]
 
     @app_commands.command(
@@ -138,27 +127,28 @@ class ListSpecialCampaign(commands.Cog):
     async def leave_campaign(self, interaction: Interaction, campaign: str):
         await interaction.response.defer(ephemeral=False)
 
-        specials, client_mongo = get_special_campaigns_collection()
+        conn = get_connection()
+        cursor = conn.cursor()
         username = interaction.user.display_name
 
-        doc = specials.find_one({campaign: {"$exists": True}})
-        if not doc:
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (campaign,))
+        if not cursor.fetchone():
             await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
-            client_mongo.close()
+            conn.close()
             return
 
-        players = doc[campaign][0] if doc[campaign] else []
+        cursor.execute(f"SELECT player FROM '{campaign}'")
+        players = [row[0] for row in cursor.fetchall()]
 
         if username not in players:
             await interaction.followup.send(f"⚠️ Non sei iscritto a \"{campaign}\"!", ephemeral=True)
-            client_mongo.close()
+            conn.close()
             return
 
-        players.remove(username)
-        specials.update_one({"_id": doc["_id"]}, {"$set": {f"{campaign}": [players]}})
+        cursor.execute(f"DELETE FROM '{campaign}' WHERE player = ?", (username,))
+        conn.commit()
+        conn.close()
         await interaction.followup.send(f"👋 Sei uscito da \"{campaign}\"!", ephemeral=True)
-
-        client_mongo.close()
 
 
 # Cog setup
