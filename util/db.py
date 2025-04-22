@@ -10,8 +10,7 @@ class MongoSync:
             cls.__client = MongoClient(
                 f"mongodb://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@ac-f7n4bxh-shard-00-02.qxfls1g.mongodb.net:27017,ac-f7n4bxh-shard-00-01.qxfls1g.mongodb.net:27017, ac-f7n4bxh-shard-00-00.qxfls1g.mongodb.net:27017/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD",
                 serverSelectionTimeoutMS=5000,
-                connectTimeoutMS=5000,
-                directConnection=True
+                connectTimeoutMS=5000
             )
         return cls.__client
 
