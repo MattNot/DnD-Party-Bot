@@ -4,8 +4,9 @@ import logging
 import discord
 from discord import app_commands, ChannelType, Permissions, Colour
 from discord.ext import commands
-from pymongo import MongoClient
 from dotenv import load_dotenv
+
+from util.db import MongoSync
 
 load_dotenv()
 
@@ -48,8 +49,7 @@ class CreateCampaign(commands.Cog):
             await interaction.followup.send(content=locales[locale]["Newbie"])
             return
 
-        mongo_uri = f"mongodb+srv://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
-        mongo_client = MongoClient(mongo_uri, connect=False, serverSelectionTimeoutMS=5000, directConnection=True)
+        mongo_client = MongoSync.get_client()
         db = mongo_client[os.getenv("MONGO_DB_NAME")]
         campaigns = db[os.getenv("MONGO_COLLECTION_NAME")]
 

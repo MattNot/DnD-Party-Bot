@@ -2,8 +2,9 @@ import os
 import logging
 from discord import app_commands, Interaction
 from discord.ext import commands
-from pymongo import MongoClient
 from dotenv import load_dotenv
+
+from util.db import MongoSync
 
 load_dotenv()
 
@@ -56,8 +57,7 @@ class SelectAnnouncementsChannel(commands.Cog):
         self.announcements_channels[interaction.guild.id] = interaction.channel.id
 
         # Update MongoDB
-        mongo_uri = f"mongodb+srv://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
-        client_mongo = MongoClient(mongo_uri, connect=False, serverSelectionTimeoutMS=5000, directConnection=True)
+        client_mongo = MongoSync.get_client()
         db = client_mongo[os.getenv("MONGO_DB_NAME")]
         ann = db[os.getenv("MONGO_A_COLLECTION_NAME")]
         try:

@@ -2,9 +2,10 @@ import os
 import logging
 from discord import app_commands, Interaction, User
 from discord.ext import commands
-from pymongo import MongoClient
 from pymongo.collection import Collection
 from dotenv import load_dotenv
+
+from util.db import MongoSync
 
 load_dotenv()
 
@@ -26,8 +27,7 @@ locales = {
 }
 
 def get_campaigns_collection() -> "Collection":
-    mongo_uri = f"mongodb+srv://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
-    client = MongoClient(mongo_uri, connect=False, serverSelectionTimeoutMS=5000, directConnection=True)
+    client = MongoSync.get_client()
     db = client[os.getenv("MONGO_DB_NAME")]
     return db[os.getenv("MONGO_COLLECTION_NAME")], client
 
