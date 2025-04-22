@@ -57,7 +57,7 @@ class SelectAnnouncementsChannel(commands.Cog):
 
         # Update MongoDB
         mongo_uri = f"mongodb+srv://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
-        client_mongo = MongoClient(mongo_uri)
+        client_mongo = MongoClient(mongo_uri, connect=False)
         db = client_mongo[os.getenv("MONGO_DB_NAME")]
         ann = db[os.getenv("MONGO_A_COLLECTION_NAME")]
         try:
