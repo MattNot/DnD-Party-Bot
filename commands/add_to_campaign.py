@@ -27,7 +27,7 @@ locales = {
 
 def get_campaigns_collection() -> "Collection":
     mongo_uri = f"mongodb+srv://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
-    client = MongoClient(mongo_uri, connect=False)
+    client = MongoClient(mongo_uri, connect=False, serverSelectionTimeoutMS=5000)
     db = client[os.getenv("MONGO_DB_NAME")]
     return db[os.getenv("MONGO_COLLECTION_NAME")], client
 

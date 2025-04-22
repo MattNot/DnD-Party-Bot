@@ -49,7 +49,7 @@ class CreateCampaign(commands.Cog):
             return
 
         mongo_uri = f"mongodb+srv://{os.getenv('MONGO_USER')}:{os.getenv('MONGO_PASSWD')}@clusterdnd.qxfls1g.mongodb.net/?authSource=admin&retryWrites=true&w=majority&appName=ClusterDnD"
-        mongo_client = MongoClient(mongo_uri, connect=False)
+        mongo_client = MongoClient(mongo_uri, connect=False, serverSelectionTimeoutMS=5000)
         db = mongo_client[os.getenv("MONGO_DB_NAME")]
         campaigns = db[os.getenv("MONGO_COLLECTION_NAME")]
 
