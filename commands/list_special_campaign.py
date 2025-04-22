@@ -3,6 +3,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
 import sqlite3
+import json
 
 load_dotenv()
 
@@ -24,25 +25,24 @@ class ListSpecialCampaign(commands.Cog):
 
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        campaigns = [row[0] for row in cursor.fetchall()]
-
-        campaign_to_players = {}
-        for camp in campaigns:
-            cursor.execute(f"SELECT player FROM '{camp}'")
-            players = [row[0] for row in cursor.fetchall()]
-            campaign_to_players[camp] = players
-
+        cursor.execute("SELECT name, players FROM campaigns")
+        rows = cursor.fetchall()
         conn.close()
 
-        max_players = max((len(players) for players in campaign_to_players.values()), default=0)
+        campaign_to_players = {
+            name: json.loads(players) if players else []
+            for name, players in rows
+        }
+
+        campaigns = list(campaign_to_players.keys())
+        max_players = max((len(p) for p in campaign_to_players.values()), default=0)
 
         players_rows = []
         for i in range(max_players):
-            row = []
-            for camp in campaigns:
-                players = campaign_to_players.get(camp, [])
-                row.append(players[i] if i < len(players) else "")
+            row = [
+                campaign_to_players[camp][i] if i < len(campaign_to_players[camp]) else ""
+                for camp in campaigns
+            ]
             players_rows.append(row)
 
         col_widths = [max(len(str(row[i])) for row in [campaigns] + players_rows) for i in range(len(campaigns))]
@@ -60,8 +60,8 @@ class ListSpecialCampaign(commands.Cog):
     async def campaign_autocomplete(self, interaction: Interaction, current: str):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        campaigns = [row[0] for row in cursor.fetchall() if current.lower() in row[0].lower()]
+        cursor.execute("SELECT name FROM campaigns WHERE name LIKE ?", (f"%{current}%",))
+        campaigns = [row[0] for row in cursor.fetchall()]
         conn.close()
 
         return [app_commands.Choice(name=camp, value=camp) for camp in campaigns[:25]]
@@ -73,47 +73,44 @@ class ListSpecialCampaign(commands.Cog):
     @app_commands.describe(campaign="Il nome della campagna a cui vuoi unirti")
     @app_commands.autocomplete(campaign=campaign_autocomplete)
     async def join_campaign(self, interaction: Interaction, campaign: str):
-        await interaction.response.defer(ephemeral=False)
-
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (campaign,))
-        if not cursor.fetchone():
-            await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
-            conn.close()
-            return
+        await interaction.response.defer(ephemeral=True)
 
         username = interaction.user.display_name
-        cursor.execute(f"SELECT player FROM '{campaign}'")
-        players = [row[0] for row in cursor.fetchall()]
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT players FROM campaigns WHERE name = ?", (campaign,))
+        row = cursor.fetchone()
+        if not row:
+            await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.")
+            conn.close()
+            return
+
+        players = json.loads(row[0]) if row[0] else []
 
         if username in players:
-            await interaction.followup.send(f"⚠️ Sei già iscritto a \"{campaign}\"!", ephemeral=True)
-            conn.close()
-            return
+            await interaction.followup.send(f"⚠️ Sei già iscritto a \"{campaign}\"!")
+        elif len(players) >= 5:
+            await interaction.followup.send(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 5 giocatori.")
+        else:
+            players.append(username)
+            cursor.execute("UPDATE campaigns SET players = ? WHERE name = ?", (json.dumps(players), campaign))
+            conn.commit()
+            await interaction.followup.send(f"✅ Ti sei unito a \"{campaign}\"!")
 
-        if len(players) >= 5:
-            await interaction.followup.send(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 5 giocatori.", ephemeral=True)
-            conn.close()
-            return
-
-        cursor.execute(f"INSERT INTO '{campaign}' (player) VALUES (?)", (username,))
-        conn.commit()
         conn.close()
-        await interaction.followup.send(f"✅ Ti sei unito a \"{campaign}\"!", ephemeral=True)
 
     async def campaign_autocomplete_leave(self, interaction: Interaction, current: str):
         conn = get_connection()
         cursor = conn.cursor()
         username = interaction.user.display_name
-        campaigns = []
 
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        for (camp,) in cursor.fetchall():
-            cursor.execute(f"SELECT player FROM '{camp}'")
-            players = [row[0] for row in cursor.fetchall()]
-            if username in players and current.lower() in camp.lower():
-                campaigns.append(app_commands.Choice(name=camp, value=camp))
+        cursor.execute("SELECT name, players FROM campaigns")
+        campaigns = []
+        for name, players_json in cursor.fetchall():
+            players = json.loads(players_json) if players_json else []
+            if username in players and current.lower() in name.lower():
+                campaigns.append(app_commands.Choice(name=name, value=name))
 
         conn.close()
         return campaigns[:25]
@@ -125,30 +122,30 @@ class ListSpecialCampaign(commands.Cog):
     @app_commands.describe(campaign="Il nome della campagna da cui vuoi uscire")
     @app_commands.autocomplete(campaign=campaign_autocomplete_leave)
     async def leave_campaign(self, interaction: Interaction, campaign: str):
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.defer(ephemeral=True)
 
+        username = interaction.user.display_name
         conn = get_connection()
         cursor = conn.cursor()
-        username = interaction.user.display_name
 
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (campaign,))
-        if not cursor.fetchone():
-            await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.", ephemeral=True)
+        cursor.execute("SELECT players FROM campaigns WHERE name = ?", (campaign,))
+        row = cursor.fetchone()
+        if not row:
+            await interaction.followup.send(f"❌ Campagna \"{campaign}\" non trovata.")
             conn.close()
             return
 
-        cursor.execute(f"SELECT player FROM '{campaign}'")
-        players = [row[0] for row in cursor.fetchall()]
+        players = json.loads(row[0]) if row[0] else []
 
         if username not in players:
-            await interaction.followup.send(f"⚠️ Non sei iscritto a \"{campaign}\"!", ephemeral=True)
-            conn.close()
-            return
+            await interaction.followup.send(f"⚠️ Non sei iscritto a \"{campaign}\"!")
+        else:
+            players.remove(username)
+            cursor.execute("UPDATE campaigns SET players = ? WHERE name = ?", (json.dumps(players), campaign))
+            conn.commit()
+            await interaction.followup.send(f"👋 Sei uscito da \"{campaign}\"!")
 
-        cursor.execute(f"DELETE FROM '{campaign}' WHERE player = ?", (username,))
-        conn.commit()
         conn.close()
-        await interaction.followup.send(f"👋 Sei uscito da \"{campaign}\"!", ephemeral=True)
 
 
 # Cog setup
