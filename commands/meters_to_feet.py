@@ -32,13 +32,6 @@ class MetersToFeet(commands.Cog):
 
         await interaction.response.send_message(str(result))
 
-    @app_commands.command(
-        name="m2f",
-        description="Convert to meters to feet"
-    )
-    @app_commands.describe(feet="Amount to convert into feet")
-    async def m2f(self, interaction: discord.Interaction, feet: float, approx: Optional[bool] = True):
-        await self.feet_to_meters(interaction, feet, approx)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(MetersToFeet(bot))
