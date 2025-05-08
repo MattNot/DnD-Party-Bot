@@ -40,9 +40,10 @@ class RollADice(commands.Cog):
                 chosen = min(results, key=lambda r: r[0])
             else:
                 chosen = self.roll_expression(roll)
+                results = None
 
             total, breakdown = chosen
-            if results:
+            if results is not None:
                 nc = next(r[1] for r in results if r != chosen)
                 breakdown = f"""```diff
 + {chosen[1]}
