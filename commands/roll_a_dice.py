@@ -46,8 +46,12 @@ class RollADice(commands.Cog):
             if results is not None:
                 nc = next(r[1] for r in results if r != chosen)
                 breakdown = f"""```diff
-+ {chosen[1]}
-- {nc}
++ {''.join(chosen[1])}
+- {''.join(nc)}
+```"""
+            else:
+                breakdown = f"""```
+{''.join(breakdown)}
 ```"""
             response = locales[locale]["result"].format(
                 total=total,
