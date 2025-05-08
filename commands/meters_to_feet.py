@@ -30,7 +30,7 @@ class MetersToFeet(commands.Cog):
 
         result = ceil(meters * 3.28084) if approx else meters * 3.28084
 
-        await interaction.response.send_message(f"{meters} m -> {str(result)} ft")
+        await interaction.response.send_message(f"{meters:g} m -> {str(result)} ft")
 
 
 async def setup(bot: commands.Bot):
