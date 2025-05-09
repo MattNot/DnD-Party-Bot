@@ -49,6 +49,10 @@ def elaborate(choice: int):
     if choice == 3:
         campaign = input("Insert Campaign: ").strip()
         user = input("Insert User: ").strip()
+
+        print(campaign)
+        print(user)
+
         cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign))
         res = cursor.fetchone()
         if not res:
