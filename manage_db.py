@@ -24,10 +24,13 @@ def elaborate(choice: int):
     if choice == 1:
         cursor.execute("SELECT campaign, players, master FROM campaigns")
         rows = cursor.fetchall()
-        print(rows)
+        print(''.join(r[0] for r in rows))
     if choice == 2:
         campaign = input("Insert Campaign\n").strip()
         user = input("Insert User\n").strip()
+
+        print(campaign)
+        print(user)
 
         cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign))
         res = cursor.fetchone()
