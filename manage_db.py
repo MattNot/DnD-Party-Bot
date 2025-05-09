@@ -24,7 +24,8 @@ def elaborate(choice: int):
     if choice == 1:
         cursor.execute("SELECT campaign, players, master FROM campaigns")
         rows = cursor.fetchall()
-        print(f"{campaign}\n{master}\n{players}\n\n" for campaign, players, master in rows)
+        for campaign, players, master in rows:
+            print(f"{campaign}\n{master}\n{players}\n\n")
     if choice == 2:
         campaign = input("Insert Campaign: ").strip()
         user = input("Insert User: ").strip()
