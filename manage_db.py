@@ -32,7 +32,7 @@ def elaborate(choice: int):
         print(campaign)
         print(user)
 
-        cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign))
+        cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign,))
         res = cursor.fetchone()
         if not res:
             print("No campaign exists with that name")
@@ -53,7 +53,7 @@ def elaborate(choice: int):
         print(campaign)
         print(user)
 
-        cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign))
+        cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign,))
         res = cursor.fetchone()
         if not res:
             print("No campaign exists with that name")
