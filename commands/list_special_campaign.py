@@ -110,8 +110,8 @@ class ListSpecialCampaign(commands.Cog):
 
         if username in players:
             await interaction.followup.send(f"⚠️ Sei già iscritto a \"{campaign}\"!")
-        elif len(players) >= 5:
-            await interaction.followup.send(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 5 giocatori.")
+        elif len(players) >= 7:
+            await interaction.followup.send(f"🚫 La campagna \"{campaign}\" ha già raggiunto il limite massimo di 7 giocatori.")
         else:
             players.append(username)
             cursor.execute(

@@ -66,7 +66,7 @@ def elaborate(choice: int):
 
 def main():
     inp = ''
-    while not inp:
+    while True:
         inp = int(input(MENU_MESSAGE).strip())
         if inp == 4 :
             break
