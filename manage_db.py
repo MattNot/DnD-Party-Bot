@@ -26,8 +26,8 @@ def elaborate(choice: int):
         rows = cursor.fetchall()
         print(rows)
     if choice == 2:
-        campaign = input("Insert Campaign\n")
-        user = input("Insert User\n")
+        campaign = input("Insert Campaign\n").strip()
+        user = input("Insert User\n").strip()
 
         cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign))
         res = cursor.fetchone()
@@ -44,8 +44,8 @@ def elaborate(choice: int):
         conn.commit()
         print("Player added")
     if choice == 3:
-        campaign = input("Insert Campaign\n")
-        user = input("Insert User\n")
+        campaign = input("Insert Campaign\n").strip()
+        user = input("Insert User\n").strip()
         cursor.execute("SELECT players FROM campaigns WHERE campaign = ?", (campaign))
         res = cursor.fetchone()
         if not res:
