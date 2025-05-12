@@ -63,6 +63,7 @@ class CreateSurvey(commands.Cog):
     async def create_survey(self, interaction: Interaction, question: str, duration: str, additional_message: str = '', mon: str = '', tue: str = '', wed: str = '', thu: str = '', fri: str = '', sat: str = '', sun: str = ''):
         if not (mon or tue or wed or thu or fri or sat or sun):
             interaction.response.send_message(content = "Nessun orario inserito" , ephemeral = True)
+            return
         p = Poll(question = question, multiple = True, duration = Duration.get_duration(duration))
 
         if mon:
