@@ -1,6 +1,6 @@
 import os
 import logging
-from discord import app_commands, Interaction
+from discord import Interaction, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 

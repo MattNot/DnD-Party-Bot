@@ -1,6 +1,6 @@
 import os
 import logging
-from discord import app_commands, Interaction, User
+from discord import Interaction, User, app_commands
 from discord.ext import commands
 from pymongo.collection import Collection
 from dotenv import load_dotenv
